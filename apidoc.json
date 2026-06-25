@@ -1,0 +1,20 @@
+{
+    "name": "Fiap TC-1 API",
+    "version": "1.0.0",
+    "description": "Documentação da API do sistema de ordem de serviço mecânica",
+    "title": "Fiap TC-1 API Docs",
+    "url": "http://localhost:9000",
+    "sampleUrl": "http://localhost:9000",
+    "header": {
+        "title": "Introdução",
+        "filename": "docs/header.md"
+    },
+    "footer": {
+        "title": "Informações adicionais",
+        "filename": "docs/footer.md"
+    },
+    "template": {
+        "withCompare": true,
+        "withGenerator": true
+    }
+}

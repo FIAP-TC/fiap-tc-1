@@ -1,0 +1,11 @@
+{
+    "name": "fiap-tc-1",
+    "version": "1.0.0",
+    "description": "API documentation generation for fiap-tc-1",
+    "scripts": {
+        "docs": "apidoc -i app/Http/Controllers -o public/docs"
+    },
+    "devDependencies": {
+        "apidoc": "^1.2.0"
+    }
+}
