@@ -6,7 +6,7 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev
 
-RUN docker-php-ext-install bcmath intl zip
+RUN docker-php-ext-install bcmath intl zip pdo pdo_mysql
 
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 

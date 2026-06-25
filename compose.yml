@@ -3,9 +3,9 @@ services:
     build:
       context: '.'
       dockerfile: ./docker/php-fmp/Dockerfile
-      target: builder
     volumes:
       - .:/var/www
+      - vendor_data:/var/www/vendor
     networks:
       - private_network
     # command: sh -c "php artisan migrate --force && php-fpm"
@@ -28,13 +28,10 @@ services:
 
   database:
     image: mysql:8.4
-    command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD} 
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
       - "${DB_PORT}:3306"
     volumes:
@@ -49,3 +46,4 @@ networks:
 
 volumes:
   db_data:
+  vendor_data:
