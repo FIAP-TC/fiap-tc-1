@@ -14,11 +14,13 @@ WORKDIR /var/www
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --optimize-autoloader --no-interaction
 
 FROM php:8.3-fpm-alpine
 
 RUN apk add --no-cache libzip icu-libs
+
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
 COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
 COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d

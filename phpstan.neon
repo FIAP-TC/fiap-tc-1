@@ -1,0 +1,9 @@
+parameters:
+    level: 5
+    paths:
+        - app
+    excludePaths:
+        - app/Http/Controllers/Controller.php
+    checkMissingIterableValueType: false
+    ignoreErrors:
+        - '#Unsafe usage of new static#'
