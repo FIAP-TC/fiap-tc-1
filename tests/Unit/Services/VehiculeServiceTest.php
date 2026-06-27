@@ -2,8 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\DTOs\Vehicule\CreateVehiculeDTO;
-use App\DTOs\Vehicule\UpdateVehiculeDTO;
+use App\DTOs\Vehicule\VehiculeDTO;
 use App\Models\Customer;
 use App\Models\Vehicule;
 use App\Repositories\Contracts\CustomerRepositoryInterface;
@@ -53,7 +52,7 @@ class VehiculeServiceTest extends TestCase
         $customer     = new Customer();
         $customer->id = 1;
 
-        $this->customerRepository->shouldReceive('findById')->with(1)->andReturn($customer);
+        $this->customerRepository->shouldReceive('findByIdIgnoringStatus')->with(1)->andReturn($customer);
         $this->vehiculeRepository->shouldReceive('findByCustomer')->with(1)->andReturn(new Collection());
 
         $result = $this->vehiculeService->findByCustomer(1);
@@ -63,7 +62,7 @@ class VehiculeServiceTest extends TestCase
 
     public function test_find_by_customer_inexistente_lanca_excecao(): void
     {
-        $this->customerRepository->shouldReceive('findById')->with(99)->andReturn(null);
+        $this->customerRepository->shouldReceive('findByIdIgnoringStatus')->with(99)->andReturn(null);
 
         $this->expectException(\RuntimeException::class);
 
@@ -81,11 +80,11 @@ class VehiculeServiceTest extends TestCase
         $fresh = new Vehicule();
         $fresh->setAttribute('plate', 'XYZ9999');
 
-        $this->customerRepository->shouldReceive('findById')->with(1)->andReturn($customer);
+        $this->customerRepository->shouldReceive('findByIdIgnoringStatus')->with(1)->andReturn($customer);
         $this->vehiculeRepository->shouldReceive('create')->andReturn($created);
-        $this->vehiculeRepository->shouldReceive('findById')->with(7)->andReturn($fresh);
+        $this->vehiculeRepository->shouldReceive('findByIdIgnoringStatus')->with(7)->andReturn($fresh);
 
-        $dto    = new CreateVehiculeDTO('Novo Carro', 'XYZ9999', 'Corolla', 'Toyota', 2022, 1);
+        $dto    = new VehiculeDTO('Novo Carro', 'XYZ9999', 'Corolla', 'Toyota', 2022, null, 1);
         $result = $this->vehiculeService->create($dto);
 
         $this->assertEquals('XYZ9999', $result->plate);
@@ -93,11 +92,11 @@ class VehiculeServiceTest extends TestCase
 
     public function test_create_com_customer_inexistente_lanca_excecao(): void
     {
-        $this->customerRepository->shouldReceive('findById')->with(99)->andReturn(null);
+        $this->customerRepository->shouldReceive('findByIdIgnoringStatus')->with(99)->andReturn(null);
 
         $this->expectException(\RuntimeException::class);
 
-        $this->vehiculeService->create(new CreateVehiculeDTO('Car', 'PLT0001', 'Model', 'Brand', 2020, 99));
+        $this->vehiculeService->create(new VehiculeDTO('Car', 'PLT0001', 'Model', 'Brand', 2020, null, 99));
     }
 
     public function test_update_vehicule_existente(): void
@@ -111,7 +110,7 @@ class VehiculeServiceTest extends TestCase
         $this->vehiculeRepository->shouldReceive('findByIdIgnoringStatus')->with(1)->andReturn($vehicule, $fresh);
         $this->vehiculeRepository->shouldReceive('update')->with(1, Mockery::type('array'))->andReturn(true);
 
-        $dto    = new UpdateVehiculeDTO(name: 'Carro Atualizado');
+        $dto    = new VehiculeDTO(name:'Carro Atualizado');
         $result = $this->vehiculeService->update(1, $dto);
 
         $this->assertEquals('Carro Atualizado', $result->name);
@@ -123,7 +122,7 @@ class VehiculeServiceTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
 
-        $this->vehiculeService->update(99, new UpdateVehiculeDTO(name: 'x'));
+        $this->vehiculeService->update(99, new VehiculeDTO(name:'x'));
     }
 
     public function test_delete_vehicule_existente(): void

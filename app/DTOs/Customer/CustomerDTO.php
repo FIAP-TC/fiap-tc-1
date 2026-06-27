@@ -2,7 +2,7 @@
 
 namespace App\DTOs\Customer;
 
-class UpdateCustomerDTO
+class CustomerDTO
 {
     public function __construct(
         public readonly ?string $name                 = null,
@@ -26,12 +26,12 @@ class UpdateCustomerDTO
     public function toArray(): array
     {
         return array_filter([
-            'name'                 => $this->name,
-            'identification'       => $this->identification,
-            'identification_number'=> $this->identificationNumber,
-            'email'                => $this->email,
-            'status'               => $this->status,
-            'modified_date'        => now()->toDateTimeString(),
+            'name'                  => $this->name,
+            'identification'        => $this->identification,
+            'identification_number' => $this->identificationNumber,
+            'email'                 => $this->email,
+            'status'                => $this->status,
+            'modified_date'         => now()->toDateTimeString(),
         ], fn($v) => $v !== null);
     }
 }
