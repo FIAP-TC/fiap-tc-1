@@ -7,10 +7,11 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function test_application_returns_ok(): void
+    public function test_api_test_endpoint_returns_ok(): void
     {
-        $response = $this->get('/');
+        $response = $this->getJson('/api/test');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertJson(['status' => 'success']);
     }
 }

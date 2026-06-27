@@ -40,6 +40,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Guard JWT para autenticação stateless via API
+        'api' => [
+            'driver'   => 'jwt',
+            'provider' => 'users',
+        ],
     ],
 
     /*

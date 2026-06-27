@@ -2,43 +2,76 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+/**
+ * Model Eloquent da tabela 'users'.
+ *
+ * Responsabilidade: mapeamento da tabela de usuários e implementação
+ * da interface JWTSubject, necessária para o tymon/jwt-auth gerar
+ * e validar tokens a partir desta entidade.
+ *
+ * O campo de autenticação é 'username' (não 'email') conforme schema do projeto.
+ */
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    // O schema usa create_date/modified_date em vez dos padrões created_at/updated_at
+    public $timestamps = false;
+
     protected $fillable = [
-        'name',
-        'email',
+        'username',
         'password',
+        'status',
+        'role_id',
+        'create_date',
+        'modified_date',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'status' => 'boolean',
     ];
+
+    // -------------------------------------------------------------------------
+    // Contratos JWTSubject
+    // O JWT precisa de um identificador único do subject (sub) e de claims extras.
+    // -------------------------------------------------------------------------
+
+    /**
+     * Retorna a chave usada como subject (sub) do token JWT.
+     * Usamos o id primário do usuário para garantir unicidade.
+     */
+    public function getJWTIdentifier(): mixed
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Claims customizados adicionados ao payload do JWT.
+     * Incluímos role_id para que o middleware de role não precise
+     * fazer uma query extra no banco a cada requisição.
+     */
+    public function getJWTCustomClaims(): array
+    {
+        return [
+            'role_id' => $this->role_id,
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // Relacionamentos
+    // -------------------------------------------------------------------------
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
 }
