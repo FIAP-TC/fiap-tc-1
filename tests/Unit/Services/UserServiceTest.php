@@ -2,8 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\DTOs\User\CreateUserDTO;
-use App\DTOs\User\UpdateUserDTO;
+use App\DTOs\User\UserDTO;
 use App\Models\Role;
 use App\Models\User;
 use App\Repositories\Contracts\RoleRepositoryInterface;
@@ -73,7 +72,7 @@ class UserServiceTest extends TestCase
         // O Service chama findById após o create para retornar o user com a role carregada
         $this->userRepository->shouldReceive('findById')->with(10)->andReturn($freshUser);
 
-        $dto    = new CreateUserDTO('novo', 'senha123', 1);
+        $dto    = new UserDTO('novo', 'senha123', 1);
         $result = $this->userService->create($dto);
 
         $this->assertEquals('novo', $result->username);
@@ -86,7 +85,7 @@ class UserServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionCode(422);
 
-        $this->userService->create(new CreateUserDTO('novo', 'senha123', 99));
+        $this->userService->create(new UserDTO('novo', 'senha123', 99));
     }
 
     public function test_delete_usuario_existente(): void
@@ -120,7 +119,7 @@ class UserServiceTest extends TestCase
         $this->roleRepository->shouldReceive('findById')->with(2)->andReturn($role);
         $this->userRepository->shouldReceive('update')->andReturn(true);
 
-        $dto    = new UpdateUserDTO(username: 'admin_new', roleId: 2);
+        $dto    = new UserDTO(username: 'admin_new', roleId: 2);
         $result = $this->userService->update(1, $dto);
 
         $this->assertEquals('admin_new', $result->username);

@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\DTOs\User\CreateUserDTO;
-use App\DTOs\User\UpdateUserDTO;
+use App\DTOs\User\UserDTO;
 use App\Http\Requests\User\CreateUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
@@ -122,7 +121,7 @@ class UserController extends Controller
     public function store(CreateUserRequest $request): JsonResponse
     {
         try {
-            $user = $this->userService->create(CreateUserDTO::fromArray($request->validated()));
+            $user = $this->userService->create(UserDTO::fromArray($request->validated()));
 
             return response()->json([
                 'success' => true,
@@ -155,7 +154,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, int $id): JsonResponse
     {
         try {
-            $user = $this->userService->update($id, UpdateUserDTO::fromArray($request->validated()));
+            $user = $this->userService->update($id, UserDTO::fromArray($request->validated()));
 
             return response()->json([
                 'success' => true,
