@@ -9,10 +9,10 @@ class CreateCustomersTable extends Migration
     public function up()
     {
         Schema::create('customer', function (Blueprint $table) {
-            $table->integer('id')->primary();
+            $table->increments('id');
             $table->string('name', 255);
             $table->enum('identification', ['CPF', 'CNPJ']);
-            $table->integer('identification_number');
+            $table->bigInteger('identification_number');
             $table->string('email', 255);
             $table->tinyInteger('status');
             $table->dateTime('create_date');

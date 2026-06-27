@@ -2,29 +2,29 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * API Resource para serialização do usuário.
- *
- * Garante que a senha NUNCA seja retornada na resposta,
- * mesmo que o Model seja modificado no futuro.
- * Padroniza o formato de saída independente da estrutura interna do Model.
+ * @mixin User
  */
 class UserResource extends JsonResource
 {
     public function toArray($request): array
     {
+        /** @var User $user */
+        $user = $this->resource;
+
         return [
-            'id'       => $this->id,
-            'username' => $this->username,
-            'status'   => (bool) $this->status,
+            'id'       => $user->id,
+            'username' => $user->username,
+            'status'   => (bool) $user->status,
             'role'     => $this->whenLoaded('role', fn() => [
-                'id'   => $this->role->id,
-                'name' => $this->role->name,
+                'id'   => $user->role?->id,
+                'name' => $user->role?->name,
             ]),
-            'created_at' => $this->create_date,
-            'updated_at' => $this->modified_date,
+            'created_at' => $user->create_date,
+            'updated_at' => $user->modified_date,
         ];
     }
 }

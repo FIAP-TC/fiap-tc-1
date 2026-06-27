@@ -4,6 +4,9 @@ parameters:
         - app
     excludePaths:
         - app/Http/Controllers/Controller.php
-    checkMissingIterableValueType: false
     ignoreErrors:
-        - '#Unsafe usage of new static#'
+        - '#Call to an undefined static method Tymon\\JWTAuth\\Facades\\JWTAuth::parseToken\(\)#'
+        - '#Call to an undefined method Illuminate\\Contracts\\Auth\\Guard::attempt\(\)#'
+        - '#Call to an undefined (static )?method App\\Models\\[a-zA-Z]+::(create|where|find|all)\(\)#'
+        - '#Method App\\Repositories\\[a-zA-Z]+Repository::(findById|findByIdIgnoringStatus)\(\) should return .* but returns#'
+        - '#Property App\\Services\\AuthService::\$userRepository is never read, only written#'

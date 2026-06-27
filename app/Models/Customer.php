@@ -9,28 +9,37 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property int         $id
  * @property string      $name
- * @property string      $status
+ * @property string      $identification
+ * @property int         $identification_number
+ * @property string      $email
+ * @property bool        $status
  * @property string|null $create_date
  * @property string|null $modified_date
  */
-class Role extends Model
+class Customer extends Model
 {
     use HasFactory;
 
-    protected $table = 'role';
+    protected $table = 'customer';
 
-    // O schema usa create_date/modified_date em vez dos padrões created_at/updated_at
     public $timestamps = false;
 
     protected $fillable = [
         'name',
+        'identification',
+        'identification_number',
+        'email',
         'status',
         'create_date',
         'modified_date',
     ];
 
-    public function users(): HasMany
+    protected $casts = [
+        'status' => 'boolean',
+    ];
+
+    public function vehicules(): HasMany
     {
-        return $this->hasMany(User::class, 'role_id');
+        return $this->hasMany(Vehicule::class, 'customer_id');
     }
 }
