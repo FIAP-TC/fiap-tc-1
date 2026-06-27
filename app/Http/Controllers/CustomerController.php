@@ -2,21 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\DTOs\Customer\CreateCustomerDTO;
-use App\DTOs\Customer\UpdateCustomerDTO;
+use App\DTOs\Customer\CustomerDTO;
 use App\Http\Requests\Customer\CreateCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Http\Resources\CustomerResource;
 use App\Services\CustomerService;
 use Illuminate\Http\JsonResponse;
-
-/**
- * @api {get} /api/customers List customers
- * @apiName GetCustomers
- * @apiGroup Customer
- * @apiHeader {String} Authorization Bearer {token}
- * @apiSuccess {Object[]} data List of customers.
- */
 
 class CustomerController extends Controller
 {
@@ -32,10 +23,8 @@ class CustomerController extends Controller
      */
     public function index(): JsonResponse
     {
-        $customers = $this->customerService->findAll();
-
         return response()->json([
-            'data' => CustomerResource::collection($customers),
+            'data' => CustomerResource::collection($this->customerService->findAll()),
         ]);
     }
 
@@ -69,9 +58,7 @@ class CustomerController extends Controller
      */
     public function store(CreateCustomerRequest $request): JsonResponse
     {
-        $customer = $this->customerService->create(
-            CreateCustomerDTO::fromArray($request->validated())
-        );
+        $customer = $this->customerService->create(CustomerDTO::fromArray($request->validated()));
 
         return response()->json(['data' => new CustomerResource($customer)], 201);
     }
@@ -86,7 +73,7 @@ class CustomerController extends Controller
     public function update(UpdateCustomerRequest $request, int $id): JsonResponse
     {
         try {
-            $customer = $this->customerService->update($id, UpdateCustomerDTO::fromArray($request->validated()));
+            $customer = $this->customerService->update($id, CustomerDTO::fromArray($request->validated()));
         } catch (\RuntimeException $e) {
             return $this->errorResponse($e->getMessage(), 404);
         }

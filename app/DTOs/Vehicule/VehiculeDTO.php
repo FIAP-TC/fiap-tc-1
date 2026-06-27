@@ -2,7 +2,7 @@
 
 namespace App\DTOs\Vehicule;
 
-class UpdateVehiculeDTO
+class VehiculeDTO
 {
     public function __construct(
         public readonly ?string $name       = null,

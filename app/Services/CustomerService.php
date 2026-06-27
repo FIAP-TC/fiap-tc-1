@@ -2,8 +2,7 @@
 
 namespace App\Services;
 
-use App\DTOs\Customer\CreateCustomerDTO;
-use App\DTOs\Customer\UpdateCustomerDTO;
+use App\DTOs\Customer\CustomerDTO;
 use App\Models\Customer;
 use App\Repositories\Contracts\CustomerRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,22 +23,18 @@ class CustomerService
         return $this->customerRepository->findById($id);
     }
 
-    public function create(CreateCustomerDTO $dto): Customer
+    public function create(CustomerDTO $dto): Customer
     {
-        $customer = $this->customerRepository->create([
-            'name'                  => $dto->name,
-            'identification'        => $dto->identification,
-            'identification_number' => $dto->identificationNumber,
-            'email'                 => $dto->email,
-            'status'                => $dto->status,
-            'create_date'           => now()->toDateTimeString(),
-            'modified_date'         => now()->toDateTimeString(),
-        ]);
+        $customer = $this->customerRepository->create(array_merge(
+            ['status' => true],
+            $dto->toArray(),
+            ['create_date' => now()->toDateTimeString()]
+        ));
 
-        return $this->customerRepository->findById($customer->id);
+        return $this->customerRepository->findByIdIgnoringStatus($customer->id);
     }
 
-    public function update(int $id, UpdateCustomerDTO $dto): Customer
+    public function update(int $id, CustomerDTO $dto): Customer
     {
         $this->ensureCustomerExists($id);
 

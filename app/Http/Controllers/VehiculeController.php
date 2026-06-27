@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\DTOs\Vehicule\CreateVehiculeDTO;
-use App\DTOs\Vehicule\UpdateVehiculeDTO;
+use App\DTOs\Vehicule\VehiculeDTO;
 use App\Http\Requests\Vehicule\CreateVehiculeRequest;
 use App\Http\Requests\Vehicule\UpdateVehiculeRequest;
 use App\Http\Resources\VehiculeResource;
@@ -24,10 +23,8 @@ class VehiculeController extends Controller
      */
     public function index(): JsonResponse
     {
-        $vehicules = $this->vehiculeService->findAll();
-
         return response()->json([
-            'data' => VehiculeResource::collection($vehicules),
+            'data' => VehiculeResource::collection($this->vehiculeService->findAll()),
         ]);
     }
 
@@ -82,9 +79,7 @@ class VehiculeController extends Controller
     public function store(CreateVehiculeRequest $request): JsonResponse
     {
         try {
-            $vehicule = $this->vehiculeService->create(
-                CreateVehiculeDTO::fromArray($request->validated())
-            );
+            $vehicule = $this->vehiculeService->create(VehiculeDTO::fromArray($request->validated()));
         } catch (\RuntimeException $e) {
             return $this->errorResponse($e->getMessage(), 404);
         }
@@ -102,7 +97,7 @@ class VehiculeController extends Controller
     public function update(UpdateVehiculeRequest $request, int $id): JsonResponse
     {
         try {
-            $vehicule = $this->vehiculeService->update($id, UpdateVehiculeDTO::fromArray($request->validated()));
+            $vehicule = $this->vehiculeService->update($id, VehiculeDTO::fromArray($request->validated()));
         } catch (\RuntimeException $e) {
             return $this->errorResponse($e->getMessage(), 404);
         }

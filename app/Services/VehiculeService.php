@@ -2,8 +2,7 @@
 
 namespace App\Services;
 
-use App\DTOs\Vehicule\CreateVehiculeDTO;
-use App\DTOs\Vehicule\UpdateVehiculeDTO;
+use App\DTOs\Vehicule\VehiculeDTO;
 use App\Models\Vehicule;
 use App\Repositories\Contracts\CustomerRepositoryInterface;
 use App\Repositories\Contracts\VehiculeRepositoryInterface;
@@ -33,26 +32,20 @@ class VehiculeService
         return $this->vehiculeRepository->findByCustomer($customerId);
     }
 
-    public function create(CreateVehiculeDTO $dto): Vehicule
+    public function create(VehiculeDTO $dto): Vehicule
     {
-        $this->ensureCustomerExists($dto->customerId);
+        $this->ensureCustomerExists((int) $dto->customerId);
 
-        $vehicule = $this->vehiculeRepository->create([
-            'name'          => $dto->name,
-            'plate'         => $dto->plate,
-            'model'         => $dto->model,
-            'brand'         => $dto->brand,
-            'years'         => $dto->years,
-            'status'        => $dto->status,
-            'customer_id'   => $dto->customerId,
-            'create_date'   => now()->toDateTimeString(),
-            'modified_date' => now()->toDateTimeString(),
-        ]);
+        $vehicule = $this->vehiculeRepository->create(array_merge(
+            ['status' => true],
+            $dto->toArray(),
+            ['create_date' => now()->toDateTimeString()]
+        ));
 
-        return $this->vehiculeRepository->findById($vehicule->id);
+        return $this->vehiculeRepository->findByIdIgnoringStatus($vehicule->id);
     }
 
-    public function update(int $id, UpdateVehiculeDTO $dto): Vehicule
+    public function update(int $id, VehiculeDTO $dto): Vehicule
     {
         $this->ensureVehiculeExists($id);
 
@@ -81,7 +74,7 @@ class VehiculeService
 
     private function ensureCustomerExists(int $customerId): void
     {
-        if (!$this->customerRepository->findById($customerId)) {
+        if (!$this->customerRepository->findByIdIgnoringStatus($customerId)) {
             throw new \RuntimeException("Customer #{$customerId} not found.");
         }
     }

@@ -2,8 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\DTOs\Customer\CreateCustomerDTO;
-use App\DTOs\Customer\UpdateCustomerDTO;
+use App\DTOs\Customer\CustomerDTO;
 use App\Models\Customer;
 use App\Repositories\Contracts\CustomerRepositoryInterface;
 use App\Services\CustomerService;
@@ -63,9 +62,9 @@ class CustomerServiceTest extends TestCase
         $fresh->setAttribute('email', 'maria@example.com');
 
         $this->customerRepository->shouldReceive('create')->andReturn($created);
-        $this->customerRepository->shouldReceive('findById')->with(5)->andReturn($fresh);
+        $this->customerRepository->shouldReceive('findByIdIgnoringStatus')->with(5)->andReturn($fresh);
 
-        $dto    = new CreateCustomerDTO('Maria', 'CPF', 12345678901, 'maria@example.com');
+        $dto    = new CustomerDTO('Maria', 'CPF', 12345678901, 'maria@example.com');
         $result = $this->customerService->create($dto);
 
         $this->assertEquals('Maria', $result->name);
@@ -82,7 +81,7 @@ class CustomerServiceTest extends TestCase
         $this->customerRepository->shouldReceive('findByIdIgnoringStatus')->with(1)->andReturn($customer, $fresh);
         $this->customerRepository->shouldReceive('update')->with(1, Mockery::type('array'))->andReturn(true);
 
-        $dto    = new UpdateCustomerDTO(name: 'João Atualizado');
+        $dto    = new CustomerDTO(name:'João Atualizado');
         $result = $this->customerService->update(1, $dto);
 
         $this->assertEquals('João Atualizado', $result->name);
@@ -94,7 +93,7 @@ class CustomerServiceTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
 
-        $this->customerService->update(99, new UpdateCustomerDTO(name: 'x'));
+        $this->customerService->update(99, new CustomerDTO(name:'x'));
     }
 
     public function test_delete_customer_existente(): void
