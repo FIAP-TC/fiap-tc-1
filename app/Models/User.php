@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
- * Model Eloquent da tabela 'users'.
- *
- * Responsabilidade: mapeamento da tabela de usuários e implementação
- * da interface JWTSubject, necessária para o tymon/jwt-auth gerar
- * e validar tokens a partir desta entidade.
- *
- * O campo de autenticação é 'username' (não 'email') conforme schema do projeto.
+ * @property int         $id
+ * @property string      $username
+ * @property string      $password
+ * @property bool        $status
+ * @property int         $role_id
+ * @property string|null $create_date
+ * @property string|null $modified_date
+ * @property Role|null   $role
  */
 class User extends Authenticatable implements JWTSubject
 {

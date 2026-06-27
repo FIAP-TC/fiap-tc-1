@@ -9,17 +9,16 @@ class CreateVehiculesTable extends Migration
     public function up()
     {
         Schema::create('vehicules', function (Blueprint $table) {
-            $table->integer('id');
+            $table->increments('id');
             $table->string('name', 255);
             $table->string('plate', 25);
             $table->string('model', 255);
             $table->string('brand', 255);
             $table->integer('years');
+            $table->boolean('status')->default(true);
             $table->dateTime('create_date');
             $table->dateTime('modified_date')->nullable();
-            $table->integer('customer_id');
-
-            $table->primary(['id', 'customer_id']);
+            $table->integer('customer_id')->unsigned();
 
             $table->index('customer_id', 'fk_vehicules_customer1_idx');
 

@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VehiculeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -56,5 +58,35 @@ Route::middleware('jwt')->group(function () {
 
         // Atualizar: Admin ou Gerente
         Route::put('/{id}', [UserController::class, 'update']);
+    });
+
+    // CRUD de clientes — apenas Admin e Gerente
+    Route::middleware('manager')->prefix('customers')->group(function () {
+        Route::get('/', [CustomerController::class, 'index']);
+        Route::get('/{id}', [CustomerController::class, 'show']);
+        Route::put('/{id}', [CustomerController::class, 'update']);
+
+        Route::middleware('admin')->group(function () {
+            Route::post('/', [CustomerController::class, 'store']);
+            Route::delete('/{id}', [CustomerController::class, 'destroy']);
+        });
+    });
+
+    // Listagem de veículos por cliente
+    Route::middleware('manager')->get(
+        '/customers/{customerId}/vehicules',
+        [VehiculeController::class, 'byCustomer']
+    );
+
+    // CRUD de veículos — apenas Admin e Gerente
+    Route::middleware('manager')->prefix('vehicules')->group(function () {
+        Route::get('/', [VehiculeController::class, 'index']);
+        Route::get('/{id}', [VehiculeController::class, 'show']);
+        Route::put('/{id}', [VehiculeController::class, 'update']);
+
+        Route::middleware('admin')->group(function () {
+            Route::post('/', [VehiculeController::class, 'store']);
+            Route::delete('/{id}', [VehiculeController::class, 'destroy']);
+        });
     });
 });
