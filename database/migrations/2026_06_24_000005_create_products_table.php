@@ -9,7 +9,7 @@ class CreateProductsTable extends Migration
     public function up()
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->integer('id')->primary();
+            $table->increments('id');
             $table->string('name', 45);
             $table->enum('type', ['PECAS', 'INSUMOS']);
             $table->decimal('value', 10, 2);
