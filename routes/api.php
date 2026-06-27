@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculeController;
 use Illuminate\Support\Facades\Route;
@@ -36,8 +37,9 @@ Route::prefix('auth')->group(function () {
     Route::middleware('jwt')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
-        Route::post('refresh', [AuthController::class, 'refresh']);
     });
+
+    Route::post('refresh', [AuthController::class, 'refresh']);
 });
 
 // -----------------------------------------------------------------------------
@@ -87,6 +89,22 @@ Route::middleware('jwt')->group(function () {
         Route::middleware('admin')->group(function () {
             Route::post('/', [VehiculeController::class, 'store']);
             Route::delete('/{id}', [VehiculeController::class, 'destroy']);
+        });
+    });
+
+    // CRUD de Produtos — apenas Admin e Gerente
+    Route::middleware('manager')->prefix('products')->group(function () {
+        Route::get('/', [ProductsController::class, 'index']);
+        Route::get('/{id}', [ProductsController::class, 'show']);
+        Route::put('/{id}', [ProductsController::class, 'update']);
+        
+        // Atualização de estoque
+        Route::patch('/{id}/increase-stock', [ProductsController::class, 'increaseStock']);
+        Route::patch('/{id}/decrease-stock', [ProductsController::class, 'decreaseStock']);
+
+        Route::middleware('admin')->group(function () {
+            Route::post('/', [ProductsController::class, 'store']);
+            Route::delete('/{id}', [ProductsController::class, 'destroy']);
         });
     });
 });
