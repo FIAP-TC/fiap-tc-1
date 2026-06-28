@@ -3,6 +3,9 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
@@ -33,15 +36,35 @@ class Handler extends ExceptionHandler
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
-        $this->renderable(function (NotFoundHttpException $e, $request) {
-        if ($request->is('api/*') || $request->wantsJson()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Route not found.',
-            ], 404);
-        }
-    });
+        // Garante que rotas API sempre retornem JSON, mesmo sem Accept: application/json
+        $this->renderable(function (ValidationException $e, $request): ?JsonResponse {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Os dados fornecidos são inválidos.',
+                    'errors'  => $e->errors(),
+                ], 422);
+            }
+            return null;
+        });
+
+        $this->renderable(function (NotFoundHttpException $e, $request): ?JsonResponse {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Rota ou recurso não encontrado.',
+                ], 404);
+            }
+            return null;
+        });
+
+        $this->renderable(function (HttpException $e, $request): ?JsonResponse {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => $e->getMessage() ?: 'Erro HTTP.',
+                ], $e->getStatusCode());
+            }
+            return null;
+        });
     }
 }
