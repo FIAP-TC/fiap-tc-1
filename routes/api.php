@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculeController;
@@ -92,12 +93,25 @@ Route::middleware('jwt')->group(function () {
         });
     });
 
+    // CRUD de serviços da mecânica — apenas Admin e Gerente
+    Route::middleware('manager')->prefix('services')->group(function () {
+        Route::get('/', [ServiceController::class, 'index']);
+        Route::get('/{id}', [ServiceController::class, 'show']);
+        Route::put('/{id}', [ServiceController::class, 'update']);
+
+        // Criar e excluir: apenas Administrador
+        Route::middleware('admin')->group(function () {
+            Route::post('/', [ServiceController::class, 'store']);
+            Route::delete('/{id}', [ServiceController::class, 'destroy']);
+        });
+    });
+    
     // CRUD de Produtos — apenas Admin e Gerente
     Route::middleware('manager')->prefix('products')->group(function () {
         Route::get('/', [ProductsController::class, 'index']);
         Route::get('/{id}', [ProductsController::class, 'show']);
         Route::put('/{id}', [ProductsController::class, 'update']);
-        
+
         // Atualização de estoque
         Route::patch('/{id}/increase-stock', [ProductsController::class, 'increaseStock']);
         Route::patch('/{id}/decrease-stock', [ProductsController::class, 'decreaseStock']);
