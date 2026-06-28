@@ -13,7 +13,7 @@ class CreateServiceOrderHasProductsTable extends Migration
             $table->integer('service_order_customer_id');
             $table->integer('service_order_users_id');
             $table->integer('service_order_users_role_id');
-            $table->integer('products_id');
+            $table->unsignedInteger('products_id');
             $table->decimal('charged_value', 10, 2);
 
             $table->primary(

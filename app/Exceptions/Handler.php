@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -38,33 +39,22 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        // Garante que rotas API sempre retornem JSON, mesmo sem Accept: application/json
-        $this->renderable(function (ValidationException $e, $request): ?JsonResponse {
-            if ($request->is('api/*')) {
+        $this->renderable(function (NotFoundHttpException $e, $request) {
+            if ($request->is('api/*') || $request->wantsJson()) {
                 return response()->json([
-                    'message' => 'Os dados fornecidos são inválidos.',
-                    'errors'  => $e->errors(),
-                ], 422);
-            }
-            return null;
-        });
-
-        $this->renderable(function (NotFoundHttpException $e, $request): ?JsonResponse {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Rota ou recurso não encontrado.',
+                    'status' => 'error',
+                    'message' => 'Route not found.',
                 ], 404);
             }
-            return null;
         });
 
-        $this->renderable(function (HttpException $e, $request): ?JsonResponse {
-            if ($request->is('api/*')) {
+        $this->renderable(function (MethodNotAllowedHttpException $e, $request) {
+            if ($request->is('api/*') || $request->wantsJson()) {
                 return response()->json([
-                    'message' => $e->getMessage() ?: 'Erro HTTP.',
-                ], $e->getStatusCode());
+                    'status' => 'error',
+                    'message' => 'Method not allowed.',
+                ], 405);
             }
-            return null;
         });
     }
 }
