@@ -70,7 +70,7 @@ class ServiceOrderController extends Controller
         try {
             $dto = ServiceOrderDTO::fromArray(array_merge($request->validated(), [
                 'users_id'      => auth()->id(),
-                'users_role_id' => auth()->user()->role_id,
+                'users_role_id' => auth()->user() instanceof \App\Models\User ? auth()->user()->role_id : null,
             ]));
 
             $order = $this->serviceOrderService->create($dto);

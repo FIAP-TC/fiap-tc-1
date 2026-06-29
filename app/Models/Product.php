@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property int    $id
- * @property string $name
- * @property string $type
- * @property float  $value
- * @property int    $quantity
- * @property bool   $status
+ * @property int         $id
+ * @property string      $name
+ * @property string      $type
+ * @property float       $value
+ * @property int         $quantity
+ * @property bool        $status
+ * @property string|null $create_date
+ * @property string|null $modified_date
  */
 class Product extends Model
 {

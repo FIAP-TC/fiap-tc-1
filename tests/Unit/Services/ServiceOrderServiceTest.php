@@ -11,7 +11,6 @@ use App\Models\ServiceOrder;
 use App\Models\Vehicule;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
-use App\Repositories\Contracts\ServiceOrderStatusRepositoryInterface;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\VehiculeRepositoryInterface;
 use App\Services\ServiceOrderService;
@@ -22,26 +21,23 @@ use Tests\TestCase;
 
 class ServiceOrderServiceTest extends TestCase
 {
-    private ServiceOrderService                  $service;
-    private ServiceOrderRepositoryInterface       $orderRepo;
-    private ServiceOrderStatusRepositoryInterface $statusRepo;
-    private ProductRepositoryInterface            $productRepo;
-    private ServiceRepositoryInterface            $serviceRepo;
-    private VehiculeRepositoryInterface           $vehiculeRepo;
+    private ServiceOrderService            $service;
+    private ServiceOrderRepositoryInterface $orderRepo;
+    private ProductRepositoryInterface      $productRepo;
+    private ServiceRepositoryInterface      $serviceRepo;
+    private VehiculeRepositoryInterface     $vehiculeRepo;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->orderRepo    = Mockery::mock(ServiceOrderRepositoryInterface::class);
-        $this->statusRepo   = Mockery::mock(ServiceOrderStatusRepositoryInterface::class);
         $this->productRepo  = Mockery::mock(ProductRepositoryInterface::class);
         $this->serviceRepo  = Mockery::mock(ServiceRepositoryInterface::class);
         $this->vehiculeRepo = Mockery::mock(VehiculeRepositoryInterface::class);
 
         $this->service = new ServiceOrderService(
             $this->orderRepo,
-            $this->statusRepo,
             $this->productRepo,
             $this->serviceRepo,
             $this->vehiculeRepo,
