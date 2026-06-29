@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\OrderService\UpdateServiceOrderStatusDTO;
+use App\Http\Requests\OrderService\UpdateServiceOrderStatusRequest;
+use App\Services\ServiceOrderService;
 use Illuminate\Http\JsonResponse;
 
 class ServiceOrderController extends Controller
 {
+    public function __construct(
+        private ServiceOrderService $serviceOrderService,    
+    ){}
+
     /**
      * @api {get} /v1/service-orders Lista ordens de serviço
      *
@@ -97,5 +104,34 @@ class ServiceOrderController extends Controller
             'errors'  => [],
             'data'    => [],
         ], 201);
+    }
+
+    /**
+     * @api {patch} /api/service-orders/:id/status Update service order status
+     * @apiName UpdateServiceOrderStatus
+     * @apiGroup ServiceOrder
+     * @apiHeader {String} Authorization Bearer {token}
+     *
+     * @apiParam {Number} id Service Order ID.
+     *
+     * @apiBody {Number} status_id Service order status id.
+     */
+    public function updateStatus(UpdateServiceOrderStatusRequest $request, int $id): JsonResponse 
+    {
+        try {
+            $dto = UpdateServiceOrderStatusDTO::fromArray($request->validated());
+            $this->serviceOrderService->updateStatus($id, $dto);
+        } catch (\RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), 404);
+        }
+
+        return response()->json([
+            'message' => 'Service order status updated successfully.',
+        ]);
+    }
+
+    private function errorResponse(string $message, int $status): JsonResponse
+    {
+        return response()->json(['error' => $message], $status);
     }
 }
