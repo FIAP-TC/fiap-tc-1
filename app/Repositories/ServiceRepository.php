@@ -33,6 +33,11 @@ class ServiceRepository implements ServiceRepositoryInterface
         return Service::find($id);
     }
 
+    public function findManyByIds(array $ids): Collection
+    {
+        return Service::where('status', true)->whereIn('id', $ids)->get();
+    }
+
     public function create(array $data): Service
     {
         return Service::create($data);

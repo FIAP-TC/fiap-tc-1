@@ -2,23 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int    $id
+ * @property string $name
+ * @property string $status
+ */
 class ServiceOrderStatus extends Model
 {
     protected $table = 'service_order_status';
 
-    public $timestamps = false;
+    public $timestamps  = false;
+    public $incrementing = false; // IDs gerenciados manualmente pelo Seeder
 
-    protected $fillable = [
-        'name',
-        'status',
-        'create_date',
-        'modified_date',
-    ];
-
-    protected $casts = [
-        'status' => 'boolean',
-    ];
+    protected $fillable = ['id', 'name', 'status', 'create_date'];
 }
