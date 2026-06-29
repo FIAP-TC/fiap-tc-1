@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculeController;
@@ -90,6 +91,18 @@ Route::middleware('jwt')->group(function () {
         Route::middleware('admin')->group(function () {
             Route::post('/', [VehiculeController::class, 'store']);
             Route::delete('/{id}', [VehiculeController::class, 'destroy']);
+        });
+    });
+
+    // Ordens de Serviço — Admin e Gerente listam/buscam/excluem; todos criam
+    Route::middleware('manager')->prefix('service-orders')->group(function () {
+        Route::get('/', [ServiceOrderController::class, 'index']);
+        Route::get('/{id}', [ServiceOrderController::class, 'show']);
+        Route::post('/', [ServiceOrderController::class, 'store']);
+        Route::post('/{id}/items', [ServiceOrderController::class, 'addItems']);
+
+        Route::middleware('admin')->group(function () {
+            Route::delete('/{id}', [ServiceOrderController::class, 'destroy']);
         });
     });
 

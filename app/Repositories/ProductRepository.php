@@ -22,6 +22,11 @@ class ProductRepository implements ProductRepositoryInterface
         return $this->productModel->find($id);
     }
 
+    public function findManyByIds(array $ids): Collection
+    {
+        return Product::whereIn('id', $ids)->get();
+    }
+
     public function create(array $data): Product
     {
         return $this->productModel->create($data);

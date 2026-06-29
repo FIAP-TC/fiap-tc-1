@@ -2,100 +2,130 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\ServiceOrder\ServiceOrderDTO;
+use App\DTOs\ServiceOrder\ServiceOrderItemsDTO;
+use App\Http\Requests\ServiceOrder\AddItemsRequest;
+use App\Http\Requests\ServiceOrder\CreateServiceOrderRequest;
+use App\Http\Resources\ServiceOrderResource;
+use App\Services\ServiceOrderService;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Controller da Ordem de Serviço.
+ *
+ * Responsabilidade única: receber a request → extrair dados (incluindo
+ * usuário autenticado via JWT) → montar DTO → delegar ao ServiceOrderService.
+ * Nenhuma regra de negócio aqui.
+ */
 class ServiceOrderController extends Controller
 {
+    public function __construct(
+        private readonly ServiceOrderService $serviceOrderService,
+    ) {}
+
     /**
-     * @api {get} /v1/service-orders Lista ordens de serviço
-     *
+     * @api {get} /api/service-orders Listar Ordens de Serviço
+     * @apiName ListServiceOrders
      * @apiGroup ServiceOrder
-     *
-     * @apiName GetServiceOrders
-     *
-     * @apiVersion 1.0.0
-     *
-     * @apiHeader {String} Authorization Token de autenticação. Uso: `Bearer <token>`
-     *
-     * @apiSuccess {Boolean} success Status da requisição.
-     * @apiSuccess {Array}   errors  Lista de erros (vazia em caso de sucesso).
-     * @apiSuccess {Array}   data    Lista de ordens de serviço.
-     *
-     * @apiSuccessExample {json} Success-Response:
-     * HTTP/1.1 200 OK
-     * {
-     *     "success": true,
-     *     "errors": [],
-     *     "data": [
-     *         {
-     *             "id": 1,
-     *             "status": "PENDENTE",
-     *             "order_value": "350.00",
-     *             "create_date": "2026-06-24 10:00:00"
-     *         }
-     *     ]
-     * }
-     *
-     * @apiErrorExample {json} Unauthorized:
-     * HTTP/1.1 401 Unauthorized
-     * {
-     *     "success": false,
-     *     "errors": ["Não autenticado"],
-     *     "data": []
-     * }
+     * @apiHeader {String} Authorization Bearer {token}
      */
     public function index(): JsonResponse
     {
         return response()->json([
-            'success' => true,
-            'errors'  => [],
-            'data'    => [],
+            'data' => ServiceOrderResource::collection($this->serviceOrderService->findAll()),
         ]);
     }
 
     /**
-     * @api {post} /v1/service-orders Criar ordem de serviço
-     *
+     * @api {get} /api/service-orders/:id Buscar Ordem de Serviço por ID
+     * @apiName GetServiceOrder
      * @apiGroup ServiceOrder
-     *
-     * @apiName CreateServiceOrder
-     *
-     * @apiVersion 1.0.0
-     *
-     * @apiHeader {String} Authorization Token de autenticação. Uso: `Bearer <token>`
-     *
-     * @apiBody {Number}  users_id              ID do usuário responsável.
-     * @apiBody {Number}  vehicules_id          ID do veículo.
-     * @apiBody {Number}  vehicules_customer_id ID do cliente do veículo.
-     * @apiBody {Decimal} order_value           Valor total da ordem.
-     * @apiBody {String}  status                Status: APROVADO | PENDENTE | NEGADO.
-     *
-     * @apiSuccessExample {json} Success-Response:
-     * HTTP/1.1 201 Created
-     * {
-     *     "success": true,
-     *     "errors": [],
-     *     "data": {
-     *         "id": 1,
-     *         "status": "PENDENTE",
-     *         "order_value": "350.00"
-     *     }
-     * }
-     *
-     * @apiErrorExample {json} Validation-Error:
-     * HTTP/1.1 422 Unprocessable Entity
-     * {
-     *     "success": false,
-     *     "errors": ["O campo order_value é obrigatório"],
-     *     "data": []
-     * }
+     * @apiHeader {String} Authorization Bearer {token}
+     * @apiParam {Number} id ID da Ordem de Serviço.
      */
-    public function store(): JsonResponse
+    public function show(int $id): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'errors'  => [],
-            'data'    => [],
-        ], 201);
+        $order = $this->serviceOrderService->findById($id);
+
+        if (!$order) {
+            return $this->errorResponse('Ordem de Serviço não encontrada.', 404);
+        }
+
+        return response()->json(['data' => new ServiceOrderResource($order)]);
+    }
+
+    /**
+     * @api {post} /api/service-orders Criar Ordem de Serviço
+     * @apiName CreateServiceOrder
+     * @apiGroup ServiceOrder
+     * @apiHeader {String} Authorization Bearer {token}
+     * @apiBody {Number} vehicules_id ID do veículo.
+     * @apiBody {Number} [time_average] Tempo médio estimado.
+     *
+     * O usuário responsável é extraído automaticamente do token JWT —
+     * não é necessário enviar users_id no body.
+     */
+    public function store(CreateServiceOrderRequest $request): JsonResponse
+    {
+        try {
+            $dto = ServiceOrderDTO::fromArray(array_merge($request->validated(), [
+                'users_id'      => auth()->id(),
+                'users_role_id' => auth()->user()->role_id,
+            ]));
+
+            $order = $this->serviceOrderService->create($dto);
+        } catch (\RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500);
+        }
+
+        return response()->json(['data' => new ServiceOrderResource($order)], 201);
+    }
+
+    /**
+     * @api {delete} /api/service-orders/:id Excluir Ordem de Serviço (Soft Delete)
+     * @apiName DeleteServiceOrder
+     * @apiGroup ServiceOrder
+     * @apiHeader {String} Authorization Bearer {token}
+     * @apiParam {Number} id ID da Ordem de Serviço.
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        try {
+            $this->serviceOrderService->delete($id);
+        } catch (\RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500);
+        }
+
+        return response()->json(['message' => 'Ordem de Serviço excluída com sucesso.']);
+    }
+
+    /**
+     * @api {post} /api/service-orders/:id/items Adicionar Produtos e Serviços
+     * @apiName AddServiceOrderItems
+     * @apiGroup ServiceOrder
+     * @apiHeader {String} Authorization Bearer {token}
+     * @apiParam {Number}   id       ID da Ordem de Serviço.
+     * @apiBody {Number[]}  [products] Lista de IDs de produtos.
+     * @apiBody {Number[]}  [services] Lista de IDs de serviços.
+     *
+     * Após a inserção, o order_value é recalculado automaticamente.
+     */
+    public function addItems(AddItemsRequest $request, int $id): JsonResponse
+    {
+        try {
+            $order = $this->serviceOrderService->addItems(
+                $id,
+                ServiceOrderItemsDTO::fromArray($request->validated()),
+            );
+        } catch (\RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), $e->getCode() ?: 500);
+        }
+
+        return response()->json(['data' => new ServiceOrderResource($order)]);
+    }
+
+    private function errorResponse(string $message, int $status): JsonResponse
+    {
+        return response()->json(['message' => $message], $status);
     }
 }

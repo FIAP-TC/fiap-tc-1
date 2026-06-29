@@ -6,11 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateServiceOrderHasServiceOrderStatusTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('service_order_has_service_order_status', function (Blueprint $table) {
-            $table->integer('service_order_id');
-            $table->integer('service_order_customer_id');
+            $table->unsignedInteger('service_order_id');
+            // Coluna vestigial do schema original — sem FK ativa, mantida para compatibilidade
+            $table->integer('service_order_customer_id')->default(0);
             $table->integer('service_order_users_id');
             $table->integer('service_order_users_role_id');
             $table->integer('service_order_status_id');
@@ -22,14 +23,10 @@ class CreateServiceOrderHasServiceOrderStatusTable extends Migration
                 'so_has_status_pk'
             );
 
-            $table->index('service_order_status_id', 'fk_service_order_has_service_order_status_service_order_sta_idx');
-            $table->index(
-                ['service_order_id', 'service_order_customer_id', 'service_order_users_id', 'service_order_users_role_id'],
-                'fk_service_order_has_service_order_status_service_order1_idx'
-            );
+            $table->index('service_order_status_id', 'fk_so_has_status_status_idx');
 
-            $table->foreign(['service_order_id', 'service_order_users_id', 'service_order_users_role_id'], 'fk_service_order_has_service_order_status_service_order1')
-                ->references(['id', 'users_id', 'users_role_id'])
+            $table->foreign('service_order_id', 'fk_service_order_has_status_service_order1')
+                ->references('id')
                 ->on('service_order');
 
             $table->foreign('service_order_status_id', 'fk_service_order_has_service_order_status_service_order_status1')
@@ -38,7 +35,7 @@ class CreateServiceOrderHasServiceOrderStatusTable extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('service_order_has_service_order_status');
     }
