@@ -24,7 +24,8 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function findManyByIds(array $ids): Collection
     {
-        return Product::whereIn('id', $ids)->get();
+        /** @var Collection<int, Product> */
+        return $this->productModel->newQuery()->whereIn('id', $ids)->get();
     }
 
     public function create(array $data): Product

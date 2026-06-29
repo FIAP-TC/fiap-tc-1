@@ -50,7 +50,6 @@ use App\Entities\ServiceOrderEntity;
 use App\Models\ServiceOrder;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
-use App\Repositories\Contracts\ServiceOrderStatusRepositoryInterface;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\VehiculeRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
@@ -76,11 +75,10 @@ use Illuminate\Support\Facades\DB;
 class ServiceOrderService
 {
     public function __construct(
-        private readonly ServiceOrderRepositoryInterface       $serviceOrderRepository,
-        private readonly ServiceOrderStatusRepositoryInterface $statusRepository,
-        private readonly ProductRepositoryInterface            $productRepository,
-        private readonly ServiceRepositoryInterface            $serviceRepository,
-        private readonly VehiculeRepositoryInterface           $vehiculeRepository,
+        private readonly ServiceOrderRepositoryInterface $serviceOrderRepository,
+        private readonly ProductRepositoryInterface      $productRepository,
+        private readonly ServiceRepositoryInterface      $serviceRepository,
+        private readonly VehiculeRepositoryInterface     $vehiculeRepository,
     ) {}
 
     public function findAll(): Collection
