@@ -248,4 +248,34 @@ class ServiceOrderService
         return $found;
 >>>>>>> 52e0e98 (new: criando CRUD de OS e insercoes de produtos/servicos a ela)
     }
+
+    public function updateStatus(int $serviceOrderId, UpdateServiceOrderStatusDTO $dto): void
+    {
+        $serviceOrder = $this->serviceOrderRepository->findById($serviceOrderId);
+
+        if (!$serviceOrder) {
+            throw new \RuntimeException('Service order not found.');
+        }
+
+        $this->serviceOrderRepository->update($serviceOrder->id,$dto->toArray());
+
+        // if ($dto->statusId === ServiceOrderStatusEnum::WAITING_APPROVAL->value) {
+        //     $token = $this->tokenService->generate($serviceOrderId, $serviceOrder->customerId);
+        //     $this->notificationService->send(
+        //         $serviceOrder->email,
+        //         $serviceOrderId, 
+        //         $token,
+        //     );
+        // }
+    }
+
+    public function approve(int $orderId): void
+    {
+
+    }
+
+    public function reject(int $orderId): void
+    {
+
+    }
 }

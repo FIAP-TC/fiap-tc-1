@@ -128,4 +128,10 @@ class ServiceOrderRepository implements ServiceOrderRepositoryInterface
             'modified_date' => now()->toDateTimeString(),
         ]);
     }
+
+    public function updateStatus(int $serviceOrderId, array $data): bool 
+    {
+        return ServiceOrder::where('id', $serviceOrderId)
+            ->update($data) > 0;
+    }
 }
