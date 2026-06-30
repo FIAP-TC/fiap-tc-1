@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
+
 class OrderApprovalTokenService
 {
     public function __construct(
@@ -33,8 +35,9 @@ class OrderApprovalTokenService
         }
 
         [$serviceOrderId, $customerId, $expires] = explode('|', $payload);
-
-        if (now()->isAfter($expires)) {
+        $expiresAt = Carbon::createFromTimestamp((int) $expires);
+        
+        if (now()->isAfter($expiresAt)) {
             throw new \RuntimeException('Expired token.');
         }
 

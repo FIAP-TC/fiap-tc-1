@@ -12,12 +12,13 @@ services:
     depends_on:
       - database
 
-  mailhog:
-    image: mailhog/mailhog
-    container_name: mailhog
+  mailpit:
+    image: axllent/mailpit
     ports:
       - "1025:1025"
       - "8025:8025"
+    networks:
+      - private_network
 
   nginx:
     image: nginx:alpine

@@ -15,12 +15,7 @@ class UpdateServiceOrderStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status_id' => [
-                'required',
-                'integer',
-                Rule::exists('service_order_status', 'id')
-                    ->where('status', 1),
-            ],
+            'status_id' => 'required|integer',
         ];
     }
 }

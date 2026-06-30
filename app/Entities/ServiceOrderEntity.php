@@ -14,12 +14,14 @@ namespace App\Entities;
 class ServiceOrderEntity
 {
     /** ID do status inicial obrigatório de toda nova Ordem de Serviço. */
-    public const STATUS_RECEBIDA             = 1;
-    public const STATUS_EM_DIAGNOSTICO       = 2;
-    public const STATUS_AGUARDANDO_APROVACAO = 3;
-    public const STATUS_EM_EXECUCAO          = 4;
-    public const STATUS_FINALIZADA           = 5;
-    public const STATUS_ENTREGUE             = 6;
+    public const STATUS_RECEBIDA                = 1;
+    public const STATUS_EM_DIAGNOSTICO          = 2;
+    public const STATUS_AGUARDANDO_APROVACAO    = 3;
+    public const STATUS_EM_EXECUCAO             = 4;
+    public const STATUS_FINALIZADA              = 5;
+    public const STATUS_ENTREGUE                = 6;
+    public const STATUS_APROVADA_PELO_CLIENTE   = 7;
+    public const STATUS_REPROVADA_PELO_CLIENTE  = 8;
 
     public function __construct(
         private readonly ?int   $id,

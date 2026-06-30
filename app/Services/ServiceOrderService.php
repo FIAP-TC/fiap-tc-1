@@ -3,6 +3,7 @@
 namespace App\Services;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 use App\DTOs\OrderService\UpdateServiceOrderStatusDTO;
 use App\Enums\ServiceOrderStatusEnum;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
@@ -44,14 +45,20 @@ class ServiceOrderService
     {
 
 =======
+=======
+use App\DTOs\OrderService\UpdateServiceOrderStatusDTO;
+>>>>>>> 7c357bf (feat: Criado monitoramento de status e envio de email para aprovacao do cliente)
 use App\DTOs\ServiceOrder\ServiceOrderDTO;
 use App\DTOs\ServiceOrder\ServiceOrderItemsDTO;
 use App\Entities\ServiceOrderEntity;
 use App\Models\ServiceOrder;
+use App\Models\ServiceOrderStatus;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
+use App\Repositories\Contracts\ServiceOrderStatusRepositoryInterface;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\VehiculeRepositoryInterface;
+use \Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -79,6 +86,8 @@ class ServiceOrderService
         private readonly ProductRepositoryInterface      $productRepository,
         private readonly ServiceRepositoryInterface      $serviceRepository,
         private readonly VehiculeRepositoryInterface     $vehiculeRepository,
+        private readonly ServiceOrderStatusRepositoryInterface $serviceOrderStatusRepository,
+        private readonly OrderApprovalService            $orderApprovalService,
     ) {}
 
     public function findAll(): Collection
@@ -249,7 +258,7 @@ class ServiceOrderService
 >>>>>>> 52e0e98 (new: criando CRUD de OS e insercoes de produtos/servicos a ela)
     }
 
-    public function updateStatus(int $serviceOrderId, UpdateServiceOrderStatusDTO $dto): void
+    public function updateStatus(UpdateServiceOrderStatusDTO $dto, int $serviceOrderId): void
     {
         $serviceOrder = $this->serviceOrderRepository->findById($serviceOrderId);
 
@@ -257,25 +266,104 @@ class ServiceOrderService
             throw new \RuntimeException('Service order not found.');
         }
 
-        $this->serviceOrderRepository->update($serviceOrder->id,$dto->toArray());
+        DB::transaction(function () use ($dto, $serviceOrder) {
+            $vehicule = $this->vehiculeRepository->findByIdIgnoringStatus($serviceOrder->vehicules_id);
+            $customer = $vehicule->customer;
 
-        // if ($dto->statusId === ServiceOrderStatusEnum::WAITING_APPROVAL->value) {
-        //     $token = $this->tokenService->generate($serviceOrderId, $serviceOrder->customerId);
-        //     $this->notificationService->send(
-        //         $serviceOrder->email,
-        //         $serviceOrderId, 
-        //         $token,
-        //     );
-        // }
+            $this->serviceOrderRepository->createStatusHistory(
+                $serviceOrder->id,
+                $dto->statusId,
+                $vehicule->customer_id,
+                $serviceOrder->users_id,
+                $serviceOrder->users_role_id,
+            );
+
+            $average = $this->calculateAverageTime($serviceOrder->id);
+            $this->serviceOrderRepository->update($serviceOrder->id, [
+                'time_average' => $average,
+            ]);
+
+            if ($dto->statusId === ServiceOrderEntity::STATUS_AGUARDANDO_APROVACAO) {
+                $this->orderApprovalService->requestApproval(
+                    to: $customer->email,
+                    serviceOrderId: $serviceOrder->id,
+                    customerId: $vehicule->customer_id,
+                );
+            }
+        });
+    }
+
+    private function calculateAverageTime(int $orderId): float
+    {
+        $history = $this->serviceOrderRepository->getStatusHistory($orderId);
+        if ($history->count() < 2) {
+            return 0;
+        }
+
+        $totalMinutes = 0;
+
+        for ($i = 1; $i < $history->count(); $i++) {
+
+            $previous = Carbon::parse($history[$i - 1]->create_date);
+            $current  = Carbon::parse($history[$i]->create_date);
+
+            $totalMinutes += $previous->diffInMinutes($current);
+        }
+
+        return round($totalMinutes / ($history->count() - 1), 2);
     }
 
     public function approve(int $orderId): void
     {
+        $serviceOrder = $this->serviceOrderRepository->findById($orderId);
 
+        if (!$serviceOrder) {
+            throw new \RuntimeException('Service order not found.');
+        }
+
+        DB::transaction(function () use ($serviceOrder) {
+
+            $vehicule = $this->vehiculeRepository->findByIdIgnoringStatus($serviceOrder->vehicules_id);
+
+            $this->serviceOrderRepository->createStatusHistory(
+                $serviceOrder->id,
+                ServiceOrderEntity::STATUS_APROVADA_PELO_CLIENTE,
+                $vehicule->customer_id,
+                $serviceOrder->users_id,
+                $serviceOrder->users_role_id,
+            );
+        });
     }
 
     public function reject(int $orderId): void
     {
+        $serviceOrder = $this->serviceOrderRepository->findById($orderId);
 
+        if (!$serviceOrder) {
+            throw new \RuntimeException('Service order not found.');
+        }
+
+        DB::transaction(function () use ($serviceOrder) {
+
+            $vehicule = $this->vehiculeRepository->findByIdIgnoringStatus($serviceOrder->vehicules_id);
+
+            $this->serviceOrderRepository->createStatusHistory(
+                $serviceOrder->id,
+                ServiceOrderEntity::STATUS_REPROVADA_PELO_CLIENTE,
+                $vehicule->customer_id,
+                $serviceOrder->users_id,
+                $serviceOrder->users_role_id,
+            );
+        });
+    }
+
+    public function getCurrentStatus(int $orderId): ?ServiceOrder
+    {
+        $order = $this->serviceOrderRepository->findWithCurrentStatus($orderId);
+        if (!$order) {
+            throw new \RuntimeException('Service order not found.');
+        }
+
+        return $order;
     }
 }

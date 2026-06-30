@@ -6,7 +6,6 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ServiceOrderApprovalController;
-use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculeController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +30,11 @@ Route::prefix('test')->group(function () {
     Route::get('/', fn() => response()->json(['status' => 'success', 'mensagem' => 'Working']));
 });
 
+Route::prefix('service-orders')->group(function () {
+    Route::get('/approve', [ServiceOrderApprovalController::class, 'approve']);
+    Route::get('/reject', [ServiceOrderApprovalController::class, 'reject']);
+    Route::get('/{orderId}/track/status', [ServiceOrderController::class, 'showCurrentStatus']);
+});
 
 // -----------------------------------------------------------------------------
 // Autenticação (rotas públicas)
@@ -104,6 +108,9 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [ServiceOrderController::class, 'store']);
         Route::post('/{id}/items', [ServiceOrderController::class, 'addItems']);
 
+        Route::patch('/{id}/status', [ServiceOrderController::class, 'updateStatus']);
+
+
         Route::middleware('admin')->group(function () {
             Route::delete('/{id}', [ServiceOrderController::class, 'destroy']);
         });
@@ -137,13 +144,4 @@ Route::middleware('jwt')->group(function () {
             Route::delete('/{id}', [ProductsController::class, 'destroy']);
         });
     });
-
-    Route::middleware('manager')->prefix('service-orders')->group(function () {
-        Route::patch('/{id}/status', [ServiceOrderController::class, 'updateStatus']);
-    });
-});
-
-Route::prefix('service-orders')->group(function () {
-    Route::get('/approve', [ServiceOrderApprovalController::class, 'approve']);
-    Route::get('/reject', [ServiceOrderApprovalController::class, 'reject']);
 });

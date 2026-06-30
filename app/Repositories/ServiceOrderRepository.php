@@ -3,8 +3,10 @@
 namespace App\Repositories;
 
 use App\Models\ServiceOrder;
+use App\Models\ServiceOrderStatus;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as Collect;
 use Illuminate\Support\Facades\DB;
 
 class ServiceOrderRepository implements ServiceOrderRepositoryInterface
@@ -72,6 +74,51 @@ class ServiceOrderRepository implements ServiceOrderRepositoryInterface
     }
 
     /**
+     * Retorna a Ordem de Serviço com o status atual carregado.
+     *
+     * O status atual é determinado pelo último registro inserido no histórico
+     * (service_order_has_service_order_status), ordenado por create_date.
+     */
+    public function findWithCurrentStatus(int $orderId): ?ServiceOrder
+    {
+        $order = ServiceOrder::with([
+            'user',
+            'vehicule.customer',
+        ])->find($orderId);
+
+        if (!$order) {
+            return null;
+        }
+
+        $statusId = DB::table('service_order_has_service_order_status')
+            ->where('service_order_id', $orderId)
+            ->latest('create_date')
+            ->value('service_order_status_id');
+
+        $order->setRelation(
+            'currentStatus',
+            $statusId ? ServiceOrderStatus::find($statusId) : null
+        );
+
+        return $order;
+    }
+
+    /**
+     * Retorna o histórico de mudanças de status da Ordem de Serviço.
+     *
+     * Os registros são ordenados pela data de criação para preservar a sequência
+     * cronológica das transições de status, permitindo o cálculo do tempo médio
+     * gasto entre cada etapa do fluxo da ordem.
+     */
+    public function getStatusHistory(int $orderId): Collect
+    {
+        return DB::table('service_order_has_service_order_status')
+            ->where('service_order_id', $orderId)
+            ->orderBy('create_date')
+            ->get();
+    }
+
+    /**
      * Insere cada produto na tabela pivot, registrando o valor cobrado no momento
      * da inserção (snapshot do preço atual, preserva histórico de preços).
      */
@@ -121,17 +168,18 @@ class ServiceOrderRepository implements ServiceOrderRepositoryInterface
         return (float) ($productsTotal + $servicesTotal);
     }
 
+    /**
+     * Atualiza o valor total da Ordem de Serviço.
+     *
+     * O valor informado deve corresponder ao total recalculado a partir dos
+     * charged_values registrados nas tabelas de produtos e serviços, mantendo
+     * o histórico de preços utilizados no momento da inserção dos itens.
+     */
     public function updateOrderValue(int $orderId, float $value): bool
     {
         return (bool) ServiceOrder::where('id', $orderId)->update([
             'order_value'   => $value,
             'modified_date' => now()->toDateTimeString(),
         ]);
-    }
-
-    public function updateStatus(int $serviceOrderId, array $data): bool 
-    {
-        return ServiceOrder::where('id', $serviceOrderId)
-            ->update($data) > 0;
     }
 }

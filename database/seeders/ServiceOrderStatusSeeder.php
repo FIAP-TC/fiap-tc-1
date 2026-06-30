@@ -23,6 +23,8 @@ class ServiceOrderStatusSeeder extends Seeder
             ['id' => 4, 'name' => 'Em execução'],
             ['id' => 5, 'name' => 'Finalizada'],
             ['id' => 6, 'name' => 'Entregue'],
+            ['id' => 7, 'name' => 'Aprovada pelo cliente'],
+            ['id' => 8, 'name' => 'Reprovada pelo cliente'],
         ];
 
         foreach ($statuses as $status) {

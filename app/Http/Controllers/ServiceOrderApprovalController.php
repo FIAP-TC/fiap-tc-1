@@ -15,16 +15,14 @@ class ServiceOrderApprovalController extends Controller
 
     public function approve(Request $request)
     {
-        $payload = $this->tokenService->validate($request->get('token'));
-
+        $payload = $this->tokenService->validate($request->query('token'));
         $this->serviceOrderService->approve($payload['service_order_id']);
         return view('approval.success');
     }
 
     public function reject(Request $request)
     {
-        $payload = $this->tokenService->validate($request->get('token'));
-
+        $payload = $this->tokenService->validate($request->query('token'));
         $this->serviceOrderService->reject($payload['service_order_id']);
         return view('approval.rejected');
     }
