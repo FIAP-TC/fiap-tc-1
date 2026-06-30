@@ -12,6 +12,14 @@ services:
     depends_on:
       - database
 
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - private_network
+
   nginx:
     image: nginx:alpine
     restart: always

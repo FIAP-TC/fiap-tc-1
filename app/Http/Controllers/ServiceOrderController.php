@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\OrderService\UpdateServiceOrderStatusDTO;
 use App\DTOs\ServiceOrder\ServiceOrderDTO;
 use App\DTOs\ServiceOrder\ServiceOrderItemsDTO;
+use App\Http\Requests\OrderService\UpdateServiceOrderStatusRequest;
 use App\Http\Requests\ServiceOrder\AddItemsRequest;
 use App\Http\Requests\ServiceOrder\CreateServiceOrderRequest;
 use App\Http\Resources\ServiceOrderResource;
+use App\Http\Resources\ServiceOrderTrackingResource;
 use App\Services\ServiceOrderService;
 use Illuminate\Http\JsonResponse;
 
@@ -122,6 +125,56 @@ class ServiceOrderController extends Controller
         }
 
         return response()->json(['data' => new ServiceOrderResource($order)]);
+    }
+
+    /**
+     * @api {patch} /api/service-orders/:id/status Update service order status
+     * @apiName UpdateServiceOrderStatus
+     * @apiGroup ServiceOrder
+     * @apiHeader {String} Authorization Bearer {token}
+     *
+     * @apiParam {Number} id Service Order ID.
+     *
+     * @apiBody {Number} status_id Service order status id.
+     */
+    public function updateStatus(UpdateServiceOrderStatusRequest $request, int $serviceOrderId): JsonResponse
+    {
+        try {
+            $dto = UpdateServiceOrderStatusDTO::fromArray($request->validated());
+            $this->serviceOrderService->updateStatus($dto, $serviceOrderId);
+        } catch (\RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), 404);
+        }
+
+        return response()->json([
+            'message' => 'Status da ordem de serviço atualizado com sucesso.',
+        ]);
+    }
+
+    /**
+     * @api {get} /api/service-orders/track/status Current service order status
+     * @apiName GetServiceOrderTracking
+     * @apiGroup ServiceOrder
+     *
+     * @apiParam {Number} orderId ID da Ordem de Serviço.
+     *
+     * @apiSuccess {Object} data Informações da ordem de serviço.
+     * @apiSuccess {Number} data.id ID da Ordem de Serviço.
+     * @apiSuccess {Number} data.order_value Valor total da ordem.
+     * @apiSuccess {String} data.current_status Status atual da ordem.
+     * @apiSuccess {String} data.updated_at Data/hora da última atualização de status.
+     *
+     * @apiError (404) ServiceOrderNotFound Ordem de Serviço não encontrada.
+     */
+    public function showCurrentStatus(int $orderId)
+    {
+        try {
+            $order = $this->serviceOrderService->getCurrentStatus($orderId);
+
+            return response()->json(['data' => new ServiceOrderTrackingResource($order)]);
+        } catch (\RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), 404);
+        }
     }
 
     private function errorResponse(string $message, int $status): JsonResponse

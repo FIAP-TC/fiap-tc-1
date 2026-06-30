@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\ServiceOrderApprovalController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiculeController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,12 @@ use Illuminate\Support\Facades\Route;
 // Rota de teste (sem autenticação)
 Route::prefix('test')->group(function () {
     Route::get('/', fn() => response()->json(['status' => 'success', 'mensagem' => 'Working']));
+});
+
+Route::prefix('service-orders')->group(function () {
+    Route::get('/approve', [ServiceOrderApprovalController::class, 'approve']);
+    Route::get('/reject', [ServiceOrderApprovalController::class, 'reject']);
+    Route::get('/{orderId}/track/status', [ServiceOrderController::class, 'showCurrentStatus']);
 });
 
 // -----------------------------------------------------------------------------
@@ -100,6 +107,8 @@ Route::middleware('jwt')->group(function () {
         Route::get('/{id}', [ServiceOrderController::class, 'show']);
         Route::post('/', [ServiceOrderController::class, 'store']);
         Route::post('/{id}/items', [ServiceOrderController::class, 'addItems']);
+
+        Route::patch('/{id}/status', [ServiceOrderController::class, 'updateStatus']);
 
         Route::middleware('admin')->group(function () {
             Route::delete('/{id}', [ServiceOrderController::class, 'destroy']);

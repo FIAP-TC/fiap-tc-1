@@ -13,6 +13,7 @@ interface ServiceOrderRepositoryInterface
     public function create(array $data): ServiceOrder;
     public function update(int $id, array $data): bool;
     public function delete(int $id): bool;
+    public function findWithCurrentStatus(int $orderId): ?ServiceOrder;
 
     /** Insere o histórico de status inicial na tabela pivot. */
     public function createStatusHistory(int $orderId, int $statusId, int $customerId, int $usersId, int $usersRoleId): void;
