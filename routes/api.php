@@ -110,7 +110,6 @@ Route::middleware('jwt')->group(function () {
 
         Route::patch('/{id}/status', [ServiceOrderController::class, 'updateStatus']);
 
-
         Route::middleware('admin')->group(function () {
             Route::delete('/{id}', [ServiceOrderController::class, 'destroy']);
         });
