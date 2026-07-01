@@ -80,7 +80,6 @@ A documentação foi construída utilizando o apidoc. Para gerar e visualizar lo
 
 5. Acesse a Aplicação:
     - API: http://localhost:9000 (via Nginx)
-    - Documentação APIdocs: http://localhost:9000/api/documentation
     - Mailpit (Teste de E-mails): http://localhost:8025
 
 ## Testes
