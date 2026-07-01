@@ -86,3 +86,13 @@ O projeto conta com testes unitários e de integração para garantir a estabili
 ```bash
 docker-compose exec api php artisan test
 ```
+
+## Análise Estática e Qualidade de Código
+
+Para garantir a manutenibilidade, a correta tipagem do ecossistema Laravel e prevenir bugs em ambiente de desenvolvimento, o projeto utiliza o **PHPStan** como ferramenta de análise estática (SAST).
+
+A análise está configurada para varrer os domínios críticos da aplicação. Para contornar possíveis gargalos de processamento em projetos monolíticos, execute o comando abaixo forçando a liberação do limite de memória do PHP:
+
+```bash
+docker-compose exec api ./vendor/bin/phpstan analyse --memory-limit=-1
+```
