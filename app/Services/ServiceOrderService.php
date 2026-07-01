@@ -7,10 +7,8 @@ use App\DTOs\ServiceOrder\ServiceOrderDTO;
 use App\DTOs\ServiceOrder\ServiceOrderItemsDTO;
 use App\Entities\ServiceOrderEntity;
 use App\Models\ServiceOrder;
-use App\Models\ServiceOrderStatus;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
-use App\Repositories\Contracts\ServiceOrderStatusRepositoryInterface;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\VehiculeRepositoryInterface;
 use \Carbon\Carbon;
@@ -41,7 +39,6 @@ class ServiceOrderService
         private readonly ProductRepositoryInterface      $productRepository,
         private readonly ServiceRepositoryInterface      $serviceRepository,
         private readonly VehiculeRepositoryInterface     $vehiculeRepository,
-        private readonly ServiceOrderStatusRepositoryInterface $serviceOrderStatusRepository,
         private readonly OrderApprovalService            $orderApprovalService,
     ) {}
 

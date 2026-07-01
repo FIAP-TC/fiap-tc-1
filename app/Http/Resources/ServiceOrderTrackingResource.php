@@ -4,6 +4,13 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin \App\Models\ServiceOrder
+ * @property int $id
+ * @property mixed $vehicule
+ * @property float $order_value
+ * @property mixed $currentStatus
+ */
 class ServiceOrderTrackingResource extends JsonResource
 {
     public function toArray($request): array

@@ -13,6 +13,7 @@ use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\VehiculeRepositoryInterface;
+use App\Services\OrderApprovalService;
 use App\Services\ServiceOrderService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,7 @@ class ServiceOrderServiceTest extends TestCase
     private ProductRepositoryInterface      $productRepo;
     private ServiceRepositoryInterface      $serviceRepo;
     private VehiculeRepositoryInterface     $vehiculeRepo;
+    private OrderApprovalService            $orderApprovalRepo;
 
     protected function setUp(): void
     {
@@ -35,12 +37,14 @@ class ServiceOrderServiceTest extends TestCase
         $this->productRepo  = Mockery::mock(ProductRepositoryInterface::class);
         $this->serviceRepo  = Mockery::mock(ServiceRepositoryInterface::class);
         $this->vehiculeRepo = Mockery::mock(VehiculeRepositoryInterface::class);
+        $this->orderApprovalRepo = Mockery::mock(OrderApprovalService::class);
 
         $this->service = new ServiceOrderService(
             $this->orderRepo,
             $this->productRepo,
             $this->serviceRepo,
             $this->vehiculeRepo,
+            $this->orderApprovalRepo
         );
     }
 

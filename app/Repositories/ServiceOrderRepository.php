@@ -90,6 +90,7 @@ class ServiceOrderRepository implements ServiceOrderRepositoryInterface
             return null;
         }
 
+        /** @var ServiceOrder $order */
         $statusId = DB::table('service_order_has_service_order_status')
             ->where('service_order_id', $orderId)
             ->latest('create_date')

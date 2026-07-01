@@ -4,6 +4,7 @@ namespace App\Repositories\Contracts;
 
 use App\Models\ServiceOrder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as Collect;
 
 interface ServiceOrderRepositoryInterface
 {
@@ -29,4 +30,6 @@ interface ServiceOrderRepositoryInterface
 
     /** Atualiza o valor total da ordem. */
     public function updateOrderValue(int $orderId, float $value): bool;
+
+    public function getStatusHistory(int $orderId): Collect;
 }
