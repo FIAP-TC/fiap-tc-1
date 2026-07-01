@@ -35,7 +35,7 @@ Para o mapeamento dos fluxos e descoberta do domínio, aplicamos as seguintes di
 
 ## Como Executar o Projeto Localmente
 
-Siga o passo a passo abaixo para rodar a aplicação através do Docker[cite: 56]:
+Siga o passo a passo abaixo para rodar a aplicação através do Docker:
 
 1. **Clone o repositório:**
    ```bash
