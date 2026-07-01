@@ -4,7 +4,7 @@ Este projeto consiste na primeira versão (MVP) do back-end para um Sistema Inte
 
 ## Objetivos do Sistema
 
-O sistema garante uma gestão interna eficiente [cite: 14] através dos seguintes fluxos principais:
+O sistema garante uma gestão interna eficiente através dos seguintes fluxos principais:
 
 * **Criação e Acompanhamento de OS:** Gestão completa do ciclo de vida da Ordem de Serviço, desde a recepção até a entrega, com orçamentos automatizados.
 * **Gestão Administrativa:** CRUDs para controle de Clientes, Veículos, Serviços e Peças.
