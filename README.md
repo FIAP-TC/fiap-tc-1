@@ -32,6 +32,8 @@ Para o mapeamento dos fluxos e descoberta do domínio, aplicamos as seguintes di
 * **Event Storming:** Modelagem dos fluxos de Criação/Acompanhamento da OS e Gestão de Peças/Insumos.
     * [https://miro.com/app/board/uXjVHQxkki4=/?share_link_id=478657558979](#)
 * **Domain Storytelling:** Detalhamento do domínio.
+  <img width="1567" height="975" alt="Domain StoryTelling_2026-06-30" src="https://github.com/user-attachments/assets/4b2b4732-4288-48fa-9f1d-d6ed0fef2bc4" />
+
 
 ## Como Executar o Projeto Localmente
 
