@@ -2,15 +2,15 @@
 
 namespace App\Providers;
 
-use App\Repositories\Contracts\CustomerRepositoryInterface;
+use App\Domain\Customer\Repositories\CustomerRepositoryInterface;
+use App\Domain\Vehicule\Repositories\VehiculeRepositoryInterface;
+use App\Infrastructure\Persistence\Eloquent\Customer\Repositories\CustomerRepository;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderStatusRepositoryInterface;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
-use App\Repositories\Contracts\VehiculeRepositoryInterface;
-use App\Repositories\CustomerRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\RoleRepository;
 use App\Repositories\ServiceOrderRepository;
