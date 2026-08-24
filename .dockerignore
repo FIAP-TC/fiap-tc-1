@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+.phpunit.result.cache
+tests
+docs
+docker
+k8s
