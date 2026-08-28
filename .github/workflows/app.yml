@@ -13,8 +13,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
+    env:
+      DB_HOST: 127.0.0.1
+      DB_USERNAME: root
+      DB_PASSWORD: root
     services:
       mysql:
         image: mysql:8.4
@@ -39,10 +43,16 @@ jobs:
           extensions: bcmath, intl, zip, pdo, pdo_mysql
           coverage: none
 
+      - name: Cache de dependências do Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
       - name: Instalar dependências
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Preparar .env de teste
+      - name: Preparar .env
         run: |
           cp .env.example .env
           php artisan key:generate
@@ -50,14 +60,70 @@ jobs:
       - name: Rodar migrations
         run: php artisan migrate --force
 
+  unit-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, zip, pdo, pdo_mysql
+          coverage: none
+
+      - name: Cache de dependências do Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Instalar dependências
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Preparar .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
       - name: Testes unitários (PHPUnit)
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit --testsuite=Unit
+
+  phpstan:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, zip, pdo, pdo_mysql
+          coverage: none
+
+      - name: Cache de dependências do Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Instalar dependências
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Preparar .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
 
       - name: Análise estática (PHPStan)
         run: vendor/bin/phpstan analyse --level=0
 
   build-and-push:
-    needs: test
+    needs: [unit-tests, phpstan]
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.vars.outputs.tag }}
