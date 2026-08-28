@@ -94,5 +94,8 @@ jobs:
           kustomize edit set image elmarcelfarias/php8.3-fpm-alpine=elmarcelfarias/php8.3-fpm-alpine:${{ needs.build-and-push.outputs.tag }}
           kustomize edit set image elmarcelfarias/nginx-fiap-tc-1=elmarcelfarias/nginx-fiap-tc-1:${{ needs.build-and-push.outputs.tag }}
 
+      - name: Remover Job de migration anterior (se existir)
+        run: kubectl delete job api-migrate -n fiap-tc-1 --ignore-not-found=true
+
       - name: Aplicar no cluster
         run: kubectl apply -k k8s/overlays/aws

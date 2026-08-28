@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 
 // Rota de teste (sem autenticação)
 Route::prefix('test')->group(function () {
-    Route::get('/', fn() => response()->json(['status' => 'success', 'mensagem' => 'Working with AWS and CI/CD']));
+    Route::get('/', fn() => response()->json(['status' => 'success', 'mensagem' => 'Working with AWS and CI/CD 2']));
 });
 
 Route::prefix('service-orders')->group(function () {
