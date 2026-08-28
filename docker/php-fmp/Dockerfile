@@ -30,6 +30,8 @@ WORKDIR /var/www
 
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
+COPY docker/php-fmp/zz-tuning.conf /usr/local/etc/php-fpm.d/zz-tuning.conf
+
 USER www-data
 
 CMD ["php-fpm"]

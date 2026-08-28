@@ -14,3 +14,15 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+terraform/crash.log
+terraform/override.tf
+terraform/override.tf.json
+
+# Kubernetes Secret (contem credenciais reais)
+k8s/base/02-secret.yaml

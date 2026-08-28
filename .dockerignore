@@ -7,5 +7,5 @@ vendor
 .phpunit.result.cache
 tests
 docs
-docker
+docker/nginx
 k8s
