@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 
 // Rota de teste (sem autenticação)
 Route::prefix('test')->group(function () {
-    Route::get('/', fn() => response()->json(['status' => 'success', 'mensagem' => 'Working']));
+    Route::get('/', fn() => response()->json(['status' => 'success', 'mensagem' => 'Working with AWS and CI/CD']));
 });
 
 Route::prefix('service-orders')->group(function () {
@@ -127,7 +127,7 @@ Route::middleware('jwt')->group(function () {
             Route::delete('/{id}', [ServiceController::class, 'destroy']);
         });
     });
-    
+
     // CRUD de Produtos — apenas Admin e Gerente
     Route::middleware('manager')->prefix('products')->group(function () {
         Route::get('/', [ProductsController::class, 'index']);
