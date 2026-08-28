@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - 00-namespace.yaml
+  - 01-configmap.yaml
+  - 02-secret.yaml
+  - 03-mysql-pvc.yaml
+  - 04-mysql-deployment.yaml
+  - 05-mysql-service.yaml
+  - 06-api-deployment.yaml
+  - 07-api-service.yaml
+  - 08-nginx-configmap.yaml
+  - 09-nginx-deployment.yaml
+  - 10-nginx-service.yaml
+  - 11-api-hpa.yaml
+  - 12-mailpit-deployment.yaml
+  - 13-mailpit-service.yaml
+  - 14-ingress.yaml
+  - 15-api-migrate-job.yaml
