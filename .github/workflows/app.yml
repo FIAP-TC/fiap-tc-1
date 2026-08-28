@@ -13,7 +13,51 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: fiap_mecanica
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, intl, zip, pdo, pdo_mysql
+          coverage: none
+
+      - name: Instalar dependências
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Preparar .env de teste
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Rodar migrations
+        run: php artisan migrate --force
+
+      - name: Testes unitários (PHPUnit)
+        run: vendor/bin/phpunit
+
+      - name: Análise estática (PHPStan)
+        run: vendor/bin/phpstan analyse --level=0
+
   build-and-push:
+    needs: test
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.vars.outputs.tag }}
