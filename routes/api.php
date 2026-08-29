@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 
 // Rota de teste (sem autenticação)
 Route::prefix('test')->group(function () {
-    Route::get('/', fn() => response()->json(['status' => 'success', 'mensagem' => 'Working']));
+    Route::get('/', fn() => response()->json(['status' => 'success', 'mensagem' => 'Working laravel']));
 });
 
 Route::prefix('service-orders')->group(function () {
