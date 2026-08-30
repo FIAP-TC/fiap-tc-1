@@ -11,6 +11,7 @@ use App\Interfaces\Http\Controllers\Customer\DeleteCustomerController;
 use App\Interfaces\Http\Controllers\Customer\FindCustomerController;
 use App\Interfaces\Http\Controllers\Customer\ListCustomersController;
 use App\Interfaces\Http\Controllers\Customer\UpdateCustomerController;
+use App\Interfaces\Http\Controllers\Product\ListProductsController;
 use App\Interfaces\Http\Controllers\Vehicule\CreateVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\DeleteVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\FindVehiculeByCustomerController;
@@ -139,7 +140,7 @@ Route::middleware('jwt')->group(function () {
 
     // CRUD de Produtos — apenas Admin e Gerente
     Route::middleware('manager')->prefix('products')->group(function () {
-        Route::get('/', [ProductsController::class, 'index']);
+        Route::get('/', ListProductsController::class);
         Route::get('/{id}', [ProductsController::class, 'show']);
         Route::put('/{id}', [ProductsController::class, 'update']);
 
