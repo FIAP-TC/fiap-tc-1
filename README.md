@@ -97,3 +97,7 @@ A análise está configurada para varrer os domínios críticos da aplicação. 
 ```bash
 docker-compose exec api ./vendor/bin/phpstan analyse --memory-limit=-1
 ```
+
+## Infraestrutura, Kubernetes e Terraform
+
+A documentação de infraestrutura (arquitetura, Kubernetes local/AWS, provisionamento via Terraform e CI/CD) está em [`docs/INFRAESTRUTURA.md`](docs/INFRAESTRUTURA.md).
