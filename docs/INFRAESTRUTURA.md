@@ -122,6 +122,52 @@ Código em [`terraform/`](../terraform/).
 
 **Importante:** o Terraform **não** gerencia os manifestos Kubernetes da aplicação (isso é responsabilidade do `k8s/` + Kustomize) — essa separação foi deliberada: infraestrutura muda raramente e é sensível, aplicação muda o tempo todo.
 
+### Adaptando pra uma conta AWS diferente (obrigatório antes da primeira aplicação)
+
+Os valores abaixo são **específicos da conta AWS Academy** de quem for rodar — nunca são reaproveitáveis entre contas diferentes. Pule esta seção só se for reaplicar na mesma conta que já provisionou antes.
+
+**1. Nome do bucket de state — `terraform/backend.tf` e `terraform/vars.tf`**
+
+Nomes de bucket S3 são **globais** (únicos em toda a AWS, não só na sua conta) — reaproveitar um nome já usado por outra conta causa `403 Forbidden` ao tentar acessá-lo. Troque o `bucket` em `backend.tf` (valor literal, não aceita variável) e `projectName` em `vars.tf` para algo único (ex: sufixo com seu nome/conta).
+
+**2. IAM Roles do EKS — `terraform/data.tf`**
+
+Descubra os nomes existentes na sua conta:
+```bash
+aws iam list-roles --query "Roles[?contains(RoleName, 'Lab')].RoleName" --output table
+```
+O nome contendo `LabEksClusterRole` vai em `data.aws_iam_role.eks_cluster`; o que contém `LabEksNodeRole` vai em `data.aws_iam_role.eks_node`. Para confirmar de forma definitiva (não só pelo nome), veja a *trust policy* de cada um:
+```bash
+aws iam get-role --role-name "<nome>" --query "Role.AssumeRolePolicyDocument"
+```
+O Cluster role é assumido pelo serviço `eks.amazonaws.com`; o Node role, por `ec2.amazonaws.com`.
+
+**3. Confirmar suporte ao Auto Mode**
+
+```bash
+aws iam list-attached-role-policies --role-name "<nome-do-cluster-role>"
+```
+Precisa conter: `AmazonEKSClusterPolicy`, `AmazonEKSNetworkingPolicy`, `AmazonEKSComputePolicy`, `AmazonEKSBlockStoragePolicy`, `AmazonEKSLoadBalancingPolicy`. Sem essas 5, o Auto Mode não funciona nessa conta.
+
+**4. Principal ARN de acesso via `kubectl` — `terraform/vars.tf`**
+
+```bash
+aws sts get-caller-identity
+```
+O `Arn` retornado vem no formato de sessão assumida (`arn:aws:sts::<conta>:assumed-role/<role>/<sessão>`) — pegue o `Account` e o nome do role (entre `assumed-role/` e a próxima `/`) e monte o ARN do role em si:
+```
+arn:aws:iam::<Account>:role/<role>
+```
+Esse é o valor de `access_entry_principal_arn`.
+
+**5. O Secret da aplicação — `k8s/base/02-secret.yaml`**
+
+Esse arquivo **não vem do Git** (é gitignored, contém credenciais reais). Antes do primeiro `kubectl apply -k`, copie o modelo e preencha com valores próprios:
+```bash
+cp k8s/base/02-secret.yaml.example k8s/base/02-secret.yaml
+```
+Gere `APP_KEY`/`JWT_SECRET`/`APPROVAL_SECRET` novos (`openssl rand -base64 32`, `-hex 32`, `-hex 16`, respectivamente) e escolha suas próprias senhas de banco — nunca reaproveite os valores de outra pessoa.
+
 ### Como aplicar
 
 O bucket do state (`bucket.tf`) tem um problema de "ovo e galinha": não dá pra usar um backend S3 que ainda não existe. Por isso, a primeira aplicação é feita em duas fases — depois disso, aplicações normais.
