@@ -6,7 +6,6 @@ use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ServiceOrderApprovalController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\VehiculeController;
 use App\Interfaces\Http\Controllers\Customer\CreateCustomerController;
 use App\Interfaces\Http\Controllers\Customer\DeleteCustomerController;
 use App\Interfaces\Http\Controllers\Customer\FindCustomerController;
@@ -14,6 +13,7 @@ use App\Interfaces\Http\Controllers\Customer\ListCustomersController;
 use App\Interfaces\Http\Controllers\Customer\UpdateCustomerController;
 use App\Interfaces\Http\Controllers\Vehicule\CreateVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\DeleteVehiculeController;
+use App\Interfaces\Http\Controllers\Vehicule\FindVehiculeByCustomerController;
 use App\Interfaces\Http\Controllers\Vehicule\FindVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\ListVehiculesController;
 use App\Interfaces\Http\Controllers\Vehicule\UpdateVehiculeController;
@@ -95,7 +95,7 @@ Route::middleware('jwt')->group(function () {
     // Listagem de veículos por cliente
     Route::middleware('manager')->get(
         '/customers/{customerId}/vehicules',
-        [VehiculeController::class, 'byCustomer']
+        FindVehiculeByCustomerController::class
     );
 
     // CRUD de veículos — apenas Admin e Gerente
@@ -136,7 +136,7 @@ Route::middleware('jwt')->group(function () {
             Route::delete('/{id}', [ServiceController::class, 'destroy']);
         });
     });
-    
+
     // CRUD de Produtos — apenas Admin e Gerente
     Route::middleware('manager')->prefix('products')->group(function () {
         Route::get('/', [ProductsController::class, 'index']);

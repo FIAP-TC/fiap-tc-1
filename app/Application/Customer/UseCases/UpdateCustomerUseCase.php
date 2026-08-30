@@ -15,12 +15,8 @@ final class UpdateCustomerUseCase
 
     public function execute(int $customerId, CustomerDTO $customerDTO): CustomerEntity
     {
-        $customer = $this->customerRepository->findById($customerId);
-        if (!$customer) {
-            throw new CustomerNotFoundException();
-        }
-
         $customer = $this->customerRepository->update($customerId, $customerDTO->toArray());
+        
         if (!$customer) {
             throw CustomerNotFoundException::withId($customerId);
         }

@@ -59,6 +59,7 @@ final class CustomerRepository implements CustomerRepositoryInterface
         }
 
         $model->update($data);
+
         return CustomerMapper::toDomain($model);
     }
 

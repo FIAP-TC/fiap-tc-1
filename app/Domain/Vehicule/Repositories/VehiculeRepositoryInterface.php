@@ -11,6 +11,6 @@ interface VehiculeRepositoryInterface
     public function findByIdIgnoringStatus(int $id): ?VehiculeEntity;
     public function findByCustomer(int $customerId): ?array;
     public function create(array $data): VehiculeEntity;
-    public function update(int $id, array $data): VehiculeEntity;
+    public function update(int $id, array $data): ?VehiculeEntity;
     public function delete(int $id): bool;
 }

@@ -18,13 +18,13 @@ final class UpdateCustomerController
      * @apiParam {Number} id Customer ID.
      */
     public function __invoke(
+        UpdateCustomerRequest $request,
         int $id,
         UpdateCustomerUseCase $useCase, 
-        UpdateCustomerRequest $request,
     ): JsonResponse
     {
         $customerDTO = CustomerDTO::fromArray($request->validated());
         $customers = $useCase->execute($id, $customerDTO);
-        return CustomerResource::collection($customers)->response();
+        return CustomerResource::make($customers)->response();
     }
 }

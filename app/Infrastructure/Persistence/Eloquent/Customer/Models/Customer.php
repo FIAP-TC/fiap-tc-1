@@ -14,8 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int         $identification_number
  * @property string      $email
  * @property bool        $status
- * @property string|null $create_date
- * @property string|null $modified_date
+ * @property \Illuminate\Support\Carbon|null $create_date
+ * @property \Illuminate\Support\Carbon|null $modified_date
  */
 class Customer extends Model
 {
@@ -44,6 +44,8 @@ class Customer extends Model
 
     protected $casts = [
         'status' => 'boolean',
+        'create_date' => 'datetime',
+        'modified_date' => 'datetime',
     ];
 
     public function vehicules(): HasMany

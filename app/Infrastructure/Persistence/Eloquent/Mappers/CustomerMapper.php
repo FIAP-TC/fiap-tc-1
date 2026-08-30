@@ -4,7 +4,7 @@ namespace App\Infrastructure\Persistence\Eloquent\Mappers;
 
 use App\Domain\Customer\Entites\CustomerEntity;
 use App\Infrastructure\Persistence\Eloquent\Customer\Models\Customer;
-use App\Models\Vehicule as VehiculeModel;
+use App\Infrastructure\Persistence\Eloquent\Vehicule\Models\Vehicule;
 
 class CustomerMapper
 {
@@ -14,7 +14,7 @@ class CustomerMapper
 
         if ($model->relationLoaded('vehicules') && $model->vehicules) {
             $vehicles = $model->vehicules
-                ->map(fn (VehiculeModel $vehicleModel) => VehiculeMapper::toDomain($vehicleModel))
+                ->map(fn (Vehicule $vehicleModel) => VehiculeMapper::toDomain($vehicleModel))
                 ->all();
         }
 

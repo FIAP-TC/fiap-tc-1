@@ -40,15 +40,6 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->renderable(function (CustomerNotFoundException $e, $request) {
-            if ($request->is('api/*') || $request->wantsJson()) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => $e->getMessage(),
-                ], 404);
-            }
-        });
-
         $this->renderable(function (NotFoundHttpException $e, $request) {
             if ($request->is('api/*') || $request->wantsJson()) {
                 return response()->json([

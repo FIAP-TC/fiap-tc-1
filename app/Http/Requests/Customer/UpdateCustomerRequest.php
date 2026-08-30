@@ -16,11 +16,11 @@ class UpdateCustomerRequest extends FormRequest
         $customerId = $this->route('id');
 
         return [
-            'name'                  => 'sometimes|string|max:255',
-            'identification'        => 'sometimes|string|in:CPF,CNPJ',
-            'identification_number' => 'sometimes|integer',
-            'email'                 => "sometimes|email|unique:customer,email,{$customerId}",
-            'status'                => 'sometimes|boolean',
+            'name'                  => 'sometimes|required|string|max:255',
+            'identification'        => 'sometimes|required|string|in:CPF,CNPJ',
+            'identification_number' => 'sometimes|required|integer',
+            'email'                 => "sometimes|required|email|unique:customer,email,{$customerId}",
+            'status'                => 'sometimes|required|boolean',
         ];
     }
 }

@@ -7,7 +7,7 @@ use App\Domain\Vehicule\Repositories\VehiculeRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Mappers\VehiculeMapper;
 use App\Infrastructure\Persistence\Eloquent\Vehicule\Models\Vehicule;
 
-final class VehiculeRepository implements VehiculeRepositoryInterface
+final class VehicleRepository implements VehiculeRepositoryInterface
 {
     public function __construct(
         private readonly Vehicule $vehiculeModel,
@@ -62,15 +62,24 @@ final class VehiculeRepository implements VehiculeRepositoryInterface
         $model = $this->vehiculeModel
             ->create($data);
 
+        $model->load('customer');
+
         return VehiculeMapper::toDomain($model);
     }
 
-    public function update(int $id, array $data): VehiculeEntity
+    public function update(int $id, array $data): ?VehiculeEntity
     {
         $model = $this->vehiculeModel
-            ->where('id', $id)
-            ->update($data);
+            ->where('status', true)
+            ->find($id);
 
+        if (!$model) {
+            return null;
+        }
+
+        $model->update($data);
+        $model->load('customer');
+        
         return VehiculeMapper::toDomain($model);
     }
 
