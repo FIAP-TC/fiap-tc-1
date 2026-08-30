@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Domain\Customer\Exceptions\CustomerNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
