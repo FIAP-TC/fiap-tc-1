@@ -24,6 +24,8 @@ final class DeleteCustomerController
         DeleteCustomerUseCase $useCase,
     ): JsonResponse {
         $useCase->execute($id);
-        return response()->json(['message' => 'Customer deleted successfully.']);
+        return response()->json([
+            'message' => 'Customer deleted successfully.'
+        ]);
     }
 }

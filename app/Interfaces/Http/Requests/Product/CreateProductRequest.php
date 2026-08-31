@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Requests\Product;
+namespace App\Interfaces\Http\Requests\Product;
 
-use App\Enums\ProductTypeEnum;
+use App\Domain\Product\Enums\ProductTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 

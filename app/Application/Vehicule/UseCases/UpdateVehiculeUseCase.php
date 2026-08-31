@@ -17,7 +17,7 @@ final class UpdateVehiculeUseCase
     {
         $vehicule = $this->vehiculeRepository->findById($vehiculeId);
         if (!$vehicule) {
-            throw new VehiculeNotFoundException();
+            throw VehiculeNotFoundException::withId($vehiculeId);
         }
 
         $vehicule = $this->vehiculeRepository->update($vehiculeId, $vehiculeDTO->toArray());

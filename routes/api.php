@@ -3,7 +3,6 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceOrderController;
-use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ServiceOrderApprovalController;
 use App\Http\Controllers\UserController;
 use App\Interfaces\Http\Controllers\Customer\CreateCustomerController;
@@ -11,6 +10,13 @@ use App\Interfaces\Http\Controllers\Customer\DeleteCustomerController;
 use App\Interfaces\Http\Controllers\Customer\FindCustomerController;
 use App\Interfaces\Http\Controllers\Customer\ListCustomersController;
 use App\Interfaces\Http\Controllers\Customer\UpdateCustomerController;
+use App\Interfaces\Http\Controllers\Product\CreateProductController;
+use App\Interfaces\Http\Controllers\Product\DecreaseStockController;
+use App\Interfaces\Http\Controllers\Product\DeleteProductController;
+use App\Interfaces\Http\Controllers\Product\FindProductController;
+use App\Interfaces\Http\Controllers\Product\IncreaseStockController;
+use App\Interfaces\Http\Controllers\Product\ListProductsController;
+use App\Interfaces\Http\Controllers\Product\UpdateProductController;
 use App\Interfaces\Http\Controllers\Vehicule\CreateVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\DeleteVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\FindVehiculeByCustomerController;
@@ -139,17 +145,17 @@ Route::middleware('jwt')->group(function () {
 
     // CRUD de Produtos — apenas Admin e Gerente
     Route::middleware('manager')->prefix('products')->group(function () {
-        Route::get('/', [ProductsController::class, 'index']);
-        Route::get('/{id}', [ProductsController::class, 'show']);
-        Route::put('/{id}', [ProductsController::class, 'update']);
+        Route::get('/', ListProductsController::class);
+        Route::get('/{id}', FindProductController::class);
+        Route::put('/{id}', UpdateProductController::class);
 
         // Atualização de estoque
-        Route::patch('/{id}/increase-stock', [ProductsController::class, 'increaseStock']);
-        Route::patch('/{id}/decrease-stock', [ProductsController::class, 'decreaseStock']);
+        Route::patch('/{id}/increase-stock', IncreaseStockController::class);
+        Route::patch('/{id}/decrease-stock', DecreaseStockController::class);
 
         Route::middleware('admin')->group(function () {
-            Route::post('/', [ProductsController::class, 'store']);
-            Route::delete('/{id}', [ProductsController::class, 'destroy']);
+            Route::post('/', CreateProductController::class);
+            Route::delete('/{id}', DeleteProductController::class);
         });
     });
 });

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTOs\Product;
+namespace App\Application\Product\DTOs;
 
 class ProductDTO
 {
@@ -31,8 +31,6 @@ class ProductDTO
             'value'         => $this->value,
             'quantity'      => $this->quantity,
             'status'        => $this->status,
-            'create_date'   => now()->toDateTimeString(),
-            'modified_date' => now()->toDateTimeString(),
         ], fn ($value) => $value !== null);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Infrastructure\Persistence\Eloquent\Product\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,5 +36,7 @@ class Product extends Model
     protected $casts = [
         'status' => 'boolean',
         'value'  => 'float',
+        'create_date' => 'datetime',
+        'modified_date' => 'datetime',
     ];
 }
