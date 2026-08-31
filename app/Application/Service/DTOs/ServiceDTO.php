@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTOs\Service;
+namespace App\Application\Service\DTOs;
 
 /**
  * DTO único para criação e atualização de Serviço.
@@ -36,7 +36,6 @@ class ServiceDTO
             'name'          => $this->name,
             'value'         => $this->value,
             'status'        => $this->status,
-            'modified_date' => now()->toDateTimeString(),
         ], fn($v) => $v !== null);
     }
 }

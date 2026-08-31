@@ -4,19 +4,19 @@ namespace App\Providers;
 
 use App\Domain\Customer\Repositories\CustomerRepositoryInterface;
 use App\Domain\Product\Repositories\ProductRepositoryInterface;
+use App\Domain\Service\Repositories\ServiceRepositoryInterface;
 use App\Domain\Vehicule\Repositories\VehiculeRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Customer\Repositories\CustomerRepository;
 use App\Infrastructure\Persistence\Eloquent\Product\Repositories\ProductRepository;
+use App\Infrastructure\Persistence\Eloquent\Service\Repositories\ServiceRepository;
 use App\Infrastructure\Persistence\Eloquent\Vehicule\Repositories\VehicleRepository;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderStatusRepositoryInterface;
-use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\RoleRepository;
 use App\Repositories\ServiceOrderRepository;
 use App\Repositories\ServiceOrderStatusRepository;
-use App\Repositories\ServiceRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\ServiceProvider;
 
