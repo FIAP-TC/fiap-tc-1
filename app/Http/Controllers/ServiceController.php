@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\DTOs\Service\ServiceDTO;
 use App\Http\Requests\Service\CreateServiceRequest;
 use App\Http\Requests\Service\UpdateServiceRequest;
-use App\Http\Resources\ServiceResource;
+use App\Interfaces\Http\Resources\ServiceResource;
 use App\Services\ServiceService;
 use Illuminate\Http\JsonResponse;
 

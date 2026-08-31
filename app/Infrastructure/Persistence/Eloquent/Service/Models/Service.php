@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Models;
+namespace App\Infrastructure\Persistence\Eloquent\Service\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property int         $id
- * @property string      $name
- * @property float       $value
- * @property bool        $status
- * @property string      $create_date
- * @property string|null $modified_date
+ * @property int                        $id
+ * @property string                     $name
+ * @property float                      $value
+ * @property bool                       $status
+ * @property \Illuminate\Support\Carbon $create_date
+ * @property \Illuminate\Support\Carbon|null $modified_date
  */
 class Service extends Model
 {
@@ -32,5 +32,7 @@ class Service extends Model
     protected $casts = [
         'status' => 'boolean',
         'value'  => 'float',
+        'create_date' => 'datetime',
+        'modified_date' => 'datetime',
     ];
 }

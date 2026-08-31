@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\ServiceOrderApprovalController;
 use App\Http\Controllers\UserController;
@@ -17,6 +16,11 @@ use App\Interfaces\Http\Controllers\Product\FindProductController;
 use App\Interfaces\Http\Controllers\Product\IncreaseStockController;
 use App\Interfaces\Http\Controllers\Product\ListProductsController;
 use App\Interfaces\Http\Controllers\Product\UpdateProductController;
+use App\Interfaces\Http\Controllers\Service\CreateServiceController;
+use App\Interfaces\Http\Controllers\Service\DeleteServiceController;
+use App\Interfaces\Http\Controllers\Service\FindServiceController;
+use App\Interfaces\Http\Controllers\Service\ListServicesController;
+use App\Interfaces\Http\Controllers\Service\UpdateServiceController;
 use App\Interfaces\Http\Controllers\Vehicule\CreateVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\DeleteVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\FindVehiculeByCustomerController;
@@ -132,14 +136,14 @@ Route::middleware('jwt')->group(function () {
 
     // CRUD de serviços da mecânica — apenas Admin e Gerente
     Route::middleware('manager')->prefix('services')->group(function () {
-        Route::get('/', [ServiceController::class, 'index']);
-        Route::get('/{id}', [ServiceController::class, 'show']);
-        Route::put('/{id}', [ServiceController::class, 'update']);
+        Route::get('/', ListServicesController::class);
+        Route::get('/{id}', FindServiceController::class);
+        Route::put('/{id}', UpdateServiceController::class);
 
         // Criar e excluir: apenas Administrador
         Route::middleware('admin')->group(function () {
-            Route::post('/', [ServiceController::class, 'store']);
-            Route::delete('/{id}', [ServiceController::class, 'destroy']);
+            Route::post('/', CreateServiceController::class);
+            Route::delete('/{id}', DeleteServiceController::class);
         });
     });
 
