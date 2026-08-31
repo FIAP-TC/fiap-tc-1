@@ -5,10 +5,14 @@ namespace App\Providers;
 use App\Domain\Customer\Repositories\CustomerRepositoryInterface;
 use App\Domain\Product\Repositories\ProductRepositoryInterface;
 use App\Domain\Service\Repositories\ServiceRepositoryInterface;
+use App\Domain\ServiceOrder\Repositories\ServiceOrderRepositoryInterface as ServiceOrderDomainRepositoryInterface;
+use App\Domain\User\Repositories\UserRepositoryInterface as UserDomainRepositoryInterface;
 use App\Domain\Vehicule\Repositories\VehiculeRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Customer\Repositories\CustomerRepository;
 use App\Infrastructure\Persistence\Eloquent\Product\Repositories\ProductRepository;
 use App\Infrastructure\Persistence\Eloquent\Service\Repositories\ServiceRepository;
+use App\Infrastructure\Persistence\Eloquent\ServiceOrder\Repositories\ServiceOrderRepository as ServiceOrderDomainRepository;
+use App\Infrastructure\Persistence\Eloquent\User\Repositories\UserRepository as UserDomainRepository;
 use App\Infrastructure\Persistence\Eloquent\Vehicule\Repositories\VehicleRepository;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
@@ -40,5 +44,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
         $this->app->bind(ServiceOrderRepositoryInterface::class, ServiceOrderRepository::class);
         $this->app->bind(ServiceOrderStatusRepositoryInterface::class, ServiceOrderStatusRepository::class);
+        $this->app->bind(ServiceOrderDomainRepositoryInterface::class, ServiceOrderDomainRepository::class);
+        $this->app->bind(UserDomainRepositoryInterface::class, UserDomainRepository::class);
     }
 }

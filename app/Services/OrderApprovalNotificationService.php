@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Mail\OrderApprovalMail;
+use App\Infrastructure\Notifications\OrderApprovalMail;
 use App\Services\Contracts\OrderApprovalNotificationServiceInterface;
 use Illuminate\Support\Facades\Mail;
 
