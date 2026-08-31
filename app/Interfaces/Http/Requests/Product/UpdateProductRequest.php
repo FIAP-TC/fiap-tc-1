@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Requests\Product;
+namespace App\Interfaces\Http\Requests\Product;
 
-use App\Enums\ProductTypeEnum;
+use App\Domain\Product\Enums\ProductTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -16,14 +16,14 @@ class UpdateProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'string', 'max:255'],
+            'name' => ['sometimes', 'filled', 'string', 'max:255'],
             'type' => [
                 'sometimes',
                 new Enum(ProductTypeEnum::class),
             ],
-            'value' => ['sometimes', 'numeric', 'min:0'],
-            'quantity' => ['sometimes', 'integer', 'min:0'],
-            'status' => ['sometimes', 'boolean'],
+            'value' => ['sometimes', 'filled', 'numeric', 'min:0'],
+            'quantity' => ['sometimes', 'filled', 'integer', 'min:0'],
+            'status' => ['sometimes', 'filled', 'boolean'],
         ];
     }
 }

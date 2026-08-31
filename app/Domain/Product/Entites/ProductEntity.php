@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Domain\Product\Entities;
+namespace App\Domain\Product\Entites;
 
+use App\Domain\Product\Exceptions\InsufficientStockException;
 use DateTimeInterface;
 
 /**
@@ -47,5 +48,33 @@ class ProductEntity
     public function getTotalStockValue(): float
     {
         return $this->value * $this->quantity;
+    }
+
+    public function addStockValue(int $quantity): self
+    {
+        return $this->withQuantity($this->quantity + $quantity);
+    }
+
+    public function decreaseStockValue(int $quantity): self
+    {
+        if ($quantity > $this->quantity) {
+            throw InsufficientStockException::forProduct($this->id, $quantity, $this->quantity);
+        }
+
+        return $this->withQuantity($this->quantity - $quantity);
+    }
+
+    private function withQuantity(int $quantity): self
+    {
+        return new self(
+            id: $this->id,
+            name: $this->name,
+            type: $this->type,
+            value: $this->value,
+            quantity: $quantity,
+            status: $this->status,
+            createdAt: $this->createdAt,
+            modifiedDate: $this->modifiedDate,
+        );
     }
 }

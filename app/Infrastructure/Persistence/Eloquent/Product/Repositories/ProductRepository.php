@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Eloquent\Product\Repositories;
 
-use App\Domain\Product\Entities\ProductEntity;
+use App\Domain\Product\Entites\ProductEntity;
 use App\Domain\Product\Repositories\ProductRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Mappers\ProductMapper;
 use App\Infrastructure\Persistence\Eloquent\Product\Models\Product;

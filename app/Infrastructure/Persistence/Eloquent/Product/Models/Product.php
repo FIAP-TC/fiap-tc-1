@@ -36,5 +36,7 @@ class Product extends Model
     protected $casts = [
         'status' => 'boolean',
         'value'  => 'float',
+        'create_date' => 'datetime',
+        'modified_date' => 'datetime',
     ];
 }

@@ -2,24 +2,23 @@
 
 namespace App\Application\Product\UseCases;
 
-use App\Domain\Product\Entites\ProductEntity;
 use App\Domain\Product\Exceptions\ProductNotFoundException;
 use App\Domain\Product\Repositories\ProductRepositoryInterface;
 
-final class FindProductUseCase
+final class DeleteProductUseCase
 {
     public function __construct(
         private readonly ProductRepositoryInterface $productRepository,
     ) {}
 
-    public function execute(int $id): ProductEntity
+    public function execute(int $id): bool
     {
-        $product = $this->productRepository->findById($id);
+        $deleted = $this->productRepository->delete($id);
 
-        if (!$product) {
+        if (!$deleted) {
             throw ProductNotFoundException::withId($id);
         }
 
-        return $product;
+        return true;
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Interfaces\Http\Controllers\Product;
 
 use App\Application\Product\UseCases\FindProductUseCase;
-use App\Http\Resources\ProductResource;
+use App\Interfaces\Http\Resources\ProductResource;
 use Illuminate\Http\JsonResponse;
 
 final class FindProductController
@@ -20,6 +20,6 @@ final class FindProductController
         FindProductUseCase $useCase,
     ): JsonResponse {
         $products = $useCase->execute($id);
-        return ProductResource::collection($products)->response();
+        return ProductResource::make($products)->response();
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Interfaces\Http\Controllers\Product;
 
 use App\Application\Product\UseCases\ListProductUseCase;
-use App\Http\Resources\ProductResource;
+use App\Interfaces\Http\Resources\ProductResource;
 use Illuminate\Http\JsonResponse;
 
 final class ListProductsController

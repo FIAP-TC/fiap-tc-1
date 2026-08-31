@@ -21,6 +21,8 @@ class VehiculeNotFoundException extends DomainException
     public function render(): JsonResponse
     {
         return response()->json([
+            'success' => false,
+            'error' => 'vehicule_not_found',
             'message' => $this->getMessage(),
         ], 404);
     }

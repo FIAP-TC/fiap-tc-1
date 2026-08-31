@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Eloquent\Mappers;
 
-use App\Domain\Product\Entities\ProductEntity;
+use App\Domain\Product\Entites\ProductEntity;
 use App\Infrastructure\Persistence\Eloquent\Product\Models\Product;
 
 class ProductMapper
