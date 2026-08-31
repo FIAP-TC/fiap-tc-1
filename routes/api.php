@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ServiceOrderController;
-use App\Http\Controllers\ServiceOrderApprovalController;
-use App\Http\Controllers\UserController;
+use App\Interfaces\Http\Controllers\Auth\LoginController;
+use App\Interfaces\Http\Controllers\Auth\LogoutController;
+use App\Interfaces\Http\Controllers\Auth\MeController;
+use App\Interfaces\Http\Controllers\Auth\RefreshController;
 use App\Interfaces\Http\Controllers\Customer\CreateCustomerController;
 use App\Interfaces\Http\Controllers\Customer\DeleteCustomerController;
 use App\Interfaces\Http\Controllers\Customer\FindCustomerController;
@@ -21,6 +21,20 @@ use App\Interfaces\Http\Controllers\Service\DeleteServiceController;
 use App\Interfaces\Http\Controllers\Service\FindServiceController;
 use App\Interfaces\Http\Controllers\Service\ListServicesController;
 use App\Interfaces\Http\Controllers\Service\UpdateServiceController;
+use App\Interfaces\Http\Controllers\ServiceOrder\AddServiceOrderItemsController;
+use App\Interfaces\Http\Controllers\ServiceOrder\ApproveServiceOrderController;
+use App\Interfaces\Http\Controllers\ServiceOrder\CreateServiceOrderController;
+use App\Interfaces\Http\Controllers\ServiceOrder\DeleteServiceOrderController;
+use App\Interfaces\Http\Controllers\ServiceOrder\FindServiceOrderController;
+use App\Interfaces\Http\Controllers\ServiceOrder\ListServiceOrdersController;
+use App\Interfaces\Http\Controllers\ServiceOrder\RejectServiceOrderController;
+use App\Interfaces\Http\Controllers\ServiceOrder\ServiceOrderTrackingController;
+use App\Interfaces\Http\Controllers\ServiceOrder\UpdateServiceOrderStatusController;
+use App\Interfaces\Http\Controllers\User\CreateUserController;
+use App\Interfaces\Http\Controllers\User\DeleteUserController;
+use App\Interfaces\Http\Controllers\User\FindUserController;
+use App\Interfaces\Http\Controllers\User\ListUsersController;
+use App\Interfaces\Http\Controllers\User\UpdateUserController;
 use App\Interfaces\Http\Controllers\Vehicule\CreateVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\DeleteVehiculeController;
 use App\Interfaces\Http\Controllers\Vehicule\FindVehiculeByCustomerController;
@@ -50,24 +64,24 @@ Route::prefix('test')->group(function () {
 });
 
 Route::prefix('service-orders')->group(function () {
-    Route::get('/approve', [ServiceOrderApprovalController::class, 'approve']);
-    Route::get('/reject', [ServiceOrderApprovalController::class, 'reject']);
-    Route::get('/{orderId}/track/status', [ServiceOrderController::class, 'showCurrentStatus']);
+    Route::get('/approve', ApproveServiceOrderController::class);
+    Route::get('/reject', RejectServiceOrderController::class);
+    Route::get('/{orderId}/track/status', ServiceOrderTrackingController::class);
 });
 
 // -----------------------------------------------------------------------------
 // Autenticação (rotas públicas)
 // -----------------------------------------------------------------------------
 Route::prefix('auth')->group(function () {
-    Route::post('login', [AuthController::class, 'login']);
+    Route::post('login', LoginController::class);
 
     // Rotas protegidas por JWT
     Route::middleware('jwt')->group(function () {
-        Route::get('me', [AuthController::class, 'me']);
-        Route::post('logout', [AuthController::class, 'logout']);
+        Route::get('me', MeController::class);
+        Route::post('logout', LogoutController::class);
     });
 
-    Route::post('refresh', [AuthController::class, 'refresh']);
+    Route::post('refresh', RefreshController::class);
 });
 
 // -----------------------------------------------------------------------------
@@ -77,17 +91,17 @@ Route::middleware('jwt')->group(function () {
 
     // CRUD de usuários — apenas Admin e Gerente podem gerenciar usuários
     Route::middleware('manager')->prefix('users')->group(function () {
-        Route::get('/', [UserController::class, 'index']);
-        Route::get('/{id}', [UserController::class, 'show']);
+        Route::get('/', ListUsersController::class);
+        Route::get('/{id}', FindUserController::class);
 
         // Criar e deletar usuários: apenas Administrador
         Route::middleware('admin')->group(function () {
-            Route::post('/', [UserController::class, 'store']);
-            Route::delete('/{id}', [UserController::class, 'destroy']);
+            Route::post('/', CreateUserController::class);
+            Route::delete('/{id}', DeleteUserController::class);
         });
 
         // Atualizar: Admin ou Gerente
-        Route::put('/{id}', [UserController::class, 'update']);
+        Route::put('/{id}', UpdateUserController::class);
     });
 
     // CRUD de clientes — apenas Admin e Gerente
@@ -122,15 +136,15 @@ Route::middleware('jwt')->group(function () {
 
     // Ordens de Serviço — Admin e Gerente listam/buscam/excluem; todos criam
     Route::middleware('manager')->prefix('service-orders')->group(function () {
-        Route::get('/', [ServiceOrderController::class, 'index']);
-        Route::get('/{id}', [ServiceOrderController::class, 'show']);
-        Route::post('/', [ServiceOrderController::class, 'store']);
-        Route::post('/{id}/items', [ServiceOrderController::class, 'addItems']);
+        Route::get('/', ListServiceOrdersController::class);
+        Route::get('/{id}', FindServiceOrderController::class);
+        Route::post('/', CreateServiceOrderController::class);
+        Route::post('/{id}/items', AddServiceOrderItemsController::class);
 
-        Route::patch('/{id}/status', [ServiceOrderController::class, 'updateStatus']);
+        Route::patch('/{id}/status', UpdateServiceOrderStatusController::class);
 
         Route::middleware('admin')->group(function () {
-            Route::delete('/{id}', [ServiceOrderController::class, 'destroy']);
+            Route::delete('/{id}', DeleteServiceOrderController::class);
         });
     });
 

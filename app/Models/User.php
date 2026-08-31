@@ -13,8 +13,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property string      $password
  * @property bool        $status
  * @property int         $role_id
- * @property string|null $create_date
- * @property string|null $modified_date
+ * @property \Illuminate\Support\Carbon      $create_date
+ * @property \Illuminate\Support\Carbon|null $modified_date
  * @property Role|null   $role
  */
 class User extends Authenticatable implements JWTSubject
@@ -39,6 +39,8 @@ class User extends Authenticatable implements JWTSubject
 
     protected $casts = [
         'status' => 'boolean',
+        'create_date' => 'datetime',
+        'modified_date' => 'datetime',
     ];
 
     // -------------------------------------------------------------------------

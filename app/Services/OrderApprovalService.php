@@ -11,7 +11,7 @@ class OrderApprovalService
         private readonly OrderApprovalNotificationServiceInterface $notificationService,
     ) {}
 
-    public function requestApproval(string $to, int $serviceOrderId, $customerId): void
+    public function requestApproval(string $to, int $serviceOrderId, int $customerId): void
     {
         $token = $this->tokenService->generate($serviceOrderId, $customerId);
 
