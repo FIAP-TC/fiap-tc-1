@@ -2,22 +2,18 @@
 
 namespace App\Providers;
 
-use App\Repositories\Contracts\CustomerRepositoryInterface;
-use App\Repositories\Contracts\ProductRepositoryInterface;
-use App\Repositories\Contracts\RoleRepositoryInterface;
-use App\Repositories\Contracts\ServiceOrderRepositoryInterface;
-use App\Repositories\Contracts\ServiceOrderStatusRepositoryInterface;
-use App\Repositories\Contracts\ServiceRepositoryInterface;
-use App\Repositories\Contracts\UserRepositoryInterface;
-use App\Repositories\Contracts\VehiculeRepositoryInterface;
-use App\Repositories\CustomerRepository;
-use App\Repositories\ProductRepository;
-use App\Repositories\RoleRepository;
-use App\Repositories\ServiceOrderRepository;
-use App\Repositories\ServiceOrderStatusRepository;
-use App\Repositories\ServiceRepository;
-use App\Repositories\UserRepository;
-use App\Repositories\VehiculeRepository;
+use App\Domain\Customer\Repositories\CustomerRepositoryInterface;
+use App\Domain\Product\Repositories\ProductRepositoryInterface;
+use App\Domain\Service\Repositories\ServiceRepositoryInterface;
+use App\Domain\ServiceOrder\Repositories\ServiceOrderRepositoryInterface;
+use App\Domain\User\Repositories\UserRepositoryInterface;
+use App\Domain\Vehicule\Repositories\VehiculeRepositoryInterface;
+use App\Infrastructure\Persistence\Eloquent\Customer\Repositories\CustomerRepository;
+use App\Infrastructure\Persistence\Eloquent\Product\Repositories\ProductRepository;
+use App\Infrastructure\Persistence\Eloquent\Service\Repositories\ServiceRepository;
+use App\Infrastructure\Persistence\Eloquent\ServiceOrder\Repositories\ServiceOrderRepository;
+use App\Infrastructure\Persistence\Eloquent\User\Repositories\UserRepository;
+use App\Infrastructure\Persistence\Eloquent\Vehicule\Repositories\VehicleRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -33,12 +29,10 @@ class RepositoryServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
-        $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
-        $this->app->bind(VehiculeRepositoryInterface::class, VehiculeRepository::class);
+        $this->app->bind(VehiculeRepositoryInterface::class, VehicleRepository::class);
         $this->app->bind(ServiceRepositoryInterface::class, ServiceRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
         $this->app->bind(ServiceOrderRepositoryInterface::class, ServiceOrderRepository::class);
-        $this->app->bind(ServiceOrderStatusRepositoryInterface::class, ServiceOrderStatusRepository::class);
     }
 }

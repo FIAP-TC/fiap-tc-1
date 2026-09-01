@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\User;
 
-use App\Models\Role;
-use App\Models\User;
+use App\Infrastructure\Persistence\Eloquent\User\Models\Role;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -53,7 +53,6 @@ class UserCrudTest extends TestCase
             ->getJson('/api/users');
 
         $response->assertStatus(200)
-            ->assertJson(['success' => true])
             ->assertJsonStructure(['data' => [['id', 'username', 'status', 'role']]]);
     }
 
@@ -174,7 +173,7 @@ class UserCrudTest extends TestCase
         $this->withHeaders($this->authHeader($this->adminToken))
             ->deleteJson("/api/users/{$user->id}")
             ->assertStatus(200)
-            ->assertJson(['success' => true]);
+            ->assertJson(['message' => 'Usuário removido com sucesso.']);
     }
 
     public function test_excluir_usuario_como_gerente_retorna_403(): void

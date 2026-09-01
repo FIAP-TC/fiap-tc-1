@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use App\Services\Contracts\OrderApprovalNotificationServiceInterface;
-use App\Services\OrderApprovalNotificationService;
-use App\Services\OrderApprovalTokenService;
+use App\Domain\ServiceOrder\Notifications\OrderApprovalNotifierInterface;
+use App\Domain\ServiceOrder\Security\OrderApprovalTokenSigner;
+use App\Infrastructure\Notifications\OrderApprovalMailNotifier;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -16,11 +16,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(OrderApprovalTokenService::class, function ($app) {
-            return new OrderApprovalTokenService(config('services.order_approval.secret'));
+        $this->app->singleton(OrderApprovalTokenSigner::class, function ($app) {
+            return new OrderApprovalTokenSigner(config('services.order_approval.secret'));
         });
 
-        $this->app->bind(OrderApprovalNotificationServiceInterface::class, OrderApprovalNotificationService::class);
+        $this->app->bind(OrderApprovalNotifierInterface::class, OrderApprovalMailNotifier::class);
     }
 
     /**
