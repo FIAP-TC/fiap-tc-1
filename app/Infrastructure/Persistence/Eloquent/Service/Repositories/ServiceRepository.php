@@ -69,6 +69,8 @@ class ServiceRepository implements ServiceRepositoryInterface
     public function create(array $data): ServiceEntity
     {
         $model = $this->serviceModel->create($data);
+        $model->refresh();
+
         return ServiceMapper::toDomain($model);
     }
 

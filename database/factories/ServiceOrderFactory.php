@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\ServiceOrder;
-use App\Models\User;
-use App\Models\Vehicule;
+use App\Infrastructure\Persistence\Eloquent\ServiceOrder\Models\ServiceOrder;
+use App\Infrastructure\Persistence\Eloquent\Vehicule\Models\Vehicule;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ServiceOrderFactory extends Factory

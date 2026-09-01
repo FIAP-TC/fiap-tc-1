@@ -4,7 +4,7 @@ namespace App\Application\Auth\UseCases;
 
 use App\Domain\User\Entites\UserEntity;
 use App\Infrastructure\Persistence\Eloquent\Mappers\UserMapper;
-use App\Services\AuthService;
+use App\Infrastructure\Auth\AuthService;
 
 final class MeUseCase
 {

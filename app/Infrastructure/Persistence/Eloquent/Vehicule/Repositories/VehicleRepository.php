@@ -62,6 +62,7 @@ final class VehicleRepository implements VehiculeRepositoryInterface
         $model = $this->vehiculeModel
             ->create($data);
 
+        $model->refresh();
         $model->load('customer');
 
         return VehiculeMapper::toDomain($model);

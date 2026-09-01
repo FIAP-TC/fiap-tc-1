@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Service;
 
-use App\Models\Role;
-use App\Models\Service;
-use App\Models\User;
+use App\Infrastructure\Persistence\Eloquent\Service\Models\Service;
+use App\Infrastructure\Persistence\Eloquent\User\Models\Role;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;

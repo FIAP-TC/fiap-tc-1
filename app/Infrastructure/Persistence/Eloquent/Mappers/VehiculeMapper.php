@@ -25,7 +25,7 @@ class VehiculeMapper
             customerId: (int) $model->customer_id,
             status: (int) $model->status,
             customer: $customerEntity,
-            createdAt: $model->created_at,
+            createdAt: $model->create_date,
             modifiedDate: $model->modified_date,
         );
     }

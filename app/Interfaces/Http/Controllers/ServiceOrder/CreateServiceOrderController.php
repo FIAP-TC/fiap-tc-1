@@ -6,7 +6,7 @@ use App\Application\ServiceOrder\DTOs\ServiceOrderDTO;
 use App\Application\ServiceOrder\UseCases\CreateServiceOrderUseCase;
 use App\Interfaces\Http\Requests\ServiceOrder\CreateServiceOrderRequest;
 use App\Interfaces\Http\Resources\ServiceOrderResource;
-use App\Models\User;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 use Illuminate\Http\JsonResponse;
 
 final class CreateServiceOrderController

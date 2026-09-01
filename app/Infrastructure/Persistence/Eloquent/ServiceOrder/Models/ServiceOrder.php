@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Eloquent\ServiceOrder\Models;
 use App\Infrastructure\Persistence\Eloquent\Product\Models\Product;
 use App\Infrastructure\Persistence\Eloquent\Service\Models\Service;
 use App\Infrastructure\Persistence\Eloquent\Vehicule\Models\Vehicule;
-use App\Models\User;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
