@@ -19,6 +19,6 @@ final class DeleteServiceController
         DeleteServiceUseCase $useCase,
     ): JsonResponse {
         $useCase->execute($id);
-        return response()->json(['message' => 'Service deleted successfully.']);
+        return response()->json(['message' => 'Serviço excluído com sucesso.']);
     }
 }

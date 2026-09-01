@@ -2,7 +2,7 @@
 
 namespace App\Application\Auth\UseCases;
 
-use App\Services\AuthService;
+use App\Infrastructure\Auth\AuthService;
 
 final class LogoutUseCase
 {

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\Role;
-use App\Models\User;
+use App\Infrastructure\Persistence\Eloquent\User\Models\Role;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -49,10 +49,8 @@ class AuthTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'success',
                 'data' => ['token', 'token_type', 'expires_in'],
-            ])
-            ->assertJson(['success' => true]);
+            ]);
     }
 
     public function test_login_com_credenciais_invalidas_retorna_401(): void
@@ -73,7 +71,7 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonStructure(['success', 'errors']);
+            ->assertJsonStructure(['message', 'errors']);
     }
 
     // -------------------------------------------------------------------------
@@ -89,8 +87,7 @@ class AuthTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'success' => true,
-                'data'    => ['username' => 'admin'],
+                'data' => ['username' => 'admin'],
             ]);
     }
 
@@ -123,7 +120,7 @@ class AuthTest extends TestCase
             ->postJson('/api/auth/logout');
 
         $response->assertStatus(200)
-            ->assertJson(['success' => true]);
+            ->assertJson(['message' => 'Logout realizado com sucesso.']);
     }
 
     public function test_logout_sem_token_retorna_401(): void

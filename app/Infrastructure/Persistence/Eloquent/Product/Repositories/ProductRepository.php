@@ -52,6 +52,8 @@ class ProductRepository implements ProductRepositoryInterface
     public function create(array $data): ProductEntity
     {
         $model = $this->productModel->create($data);
+        $model->refresh();
+
         return ProductMapper::toDomain($model);
     }
 

@@ -16,8 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int           $years
  * @property bool          $status
  * @property int           $customer_id
- * @property string|null   $create_date
- * @property string|null   $modified_date
+ * @property \Illuminate\Support\Carbon      $create_date
+ * @property \Illuminate\Support\Carbon|null $modified_date
  * @property Customer|null $customer
  */
 class Vehicule extends Model
@@ -42,6 +42,8 @@ class Vehicule extends Model
 
     protected $casts = [
         'status' => 'boolean',
+        'create_date' => 'datetime',
+        'modified_date' => 'datetime',
     ];
 
     public function customer(): BelongsTo

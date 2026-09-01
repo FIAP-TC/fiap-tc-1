@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Eloquent\User\Repositories;
 use App\Domain\User\Entites\UserEntity;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Mappers\UserMapper;
-use App\Models\User;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -39,6 +39,7 @@ class UserRepository implements UserRepositoryInterface
     public function create(array $data): UserEntity
     {
         $model = $this->userModel->create($data);
+        $model->refresh();
         $model->load('role');
 
         return UserMapper::toDomain($model);

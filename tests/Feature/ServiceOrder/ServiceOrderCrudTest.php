@@ -2,14 +2,13 @@
 
 namespace Tests\Feature\ServiceOrder;
 
-use App\Models\Customer;
-use App\Models\Product;
-use App\Models\Role;
-use App\Models\Service;
-use App\Models\ServiceOrder;
-use App\Models\ServiceOrderStatus;
-use App\Models\User;
-use App\Models\Vehicule;
+use App\Infrastructure\Persistence\Eloquent\Customer\Models\Customer;
+use App\Infrastructure\Persistence\Eloquent\Product\Models\Product;
+use App\Infrastructure\Persistence\Eloquent\Service\Models\Service;
+use App\Infrastructure\Persistence\Eloquent\ServiceOrder\Models\ServiceOrder;
+use App\Infrastructure\Persistence\Eloquent\Vehicule\Models\Vehicule;
+use App\Infrastructure\Persistence\Eloquent\User\Models\Role;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;

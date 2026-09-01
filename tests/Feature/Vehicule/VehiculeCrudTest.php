@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Vehicule;
 
-use App\Models\Customer;
-use App\Models\Role;
-use App\Models\User;
-use App\Models\Vehicule;
+use App\Infrastructure\Persistence\Eloquent\Customer\Models\Customer;
+use App\Infrastructure\Persistence\Eloquent\Vehicule\Models\Vehicule;
+use App\Infrastructure\Persistence\Eloquent\User\Models\Role;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;

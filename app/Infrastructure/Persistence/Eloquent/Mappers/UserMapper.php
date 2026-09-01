@@ -4,7 +4,7 @@ namespace App\Infrastructure\Persistence\Eloquent\Mappers;
 
 use App\Domain\User\Entites\UserEntity;
 use App\Domain\User\Entites\UserRoleEntity;
-use App\Models\User;
+use App\Infrastructure\Persistence\Eloquent\User\Models\User;
 
 class UserMapper
 {
