@@ -6,5 +6,5 @@ export const options = {
 };
 
 export default function () {
-  http.get('http://fiap-tc-1.localtest.me:9080/api/test');
+  http.get(`http://${__ENV.ALB}/api/test`);
 }
