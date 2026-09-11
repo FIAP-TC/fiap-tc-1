@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: elmarcelfarias/php8.3-fpm-alpine:1.2
+          image: elmarcelfarias/php8.3-fpm-alpine:3f113bb
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9000
