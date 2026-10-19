@@ -26,3 +26,6 @@ terraform/override.tf.json
 
 # Kubernetes Secret (contem credenciais reais)
 k8s/base/02-secret.yaml
+
+# Endpoint do RDS, muda a cada provisionamento, nunca commitar
+k8s/overlays/aws/db-host.env
