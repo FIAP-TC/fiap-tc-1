@@ -3,5 +3,4 @@ kind: PersistentVolumeClaim
 metadata:
   name: mysql-data
   namespace: fiap-tc-1
-spec:
-  storageClassName: auto-ebs-sc
+$patch: delete

@@ -24,7 +24,7 @@ spec:
               nc -z mysql 3306 || (echo "MySQL nao ficou disponivel a tempo" && exit 1)
       containers:
         - name: migrate
-          image: elmarcelfarias/php8.3-fpm-alpine:1.2
+          image: elmarcelfarias/php8.3-fpm-alpine:3f113bb
           command: ["php", "artisan", "migrate", "--seed", "--force"]
           envFrom:
             - configMapRef:

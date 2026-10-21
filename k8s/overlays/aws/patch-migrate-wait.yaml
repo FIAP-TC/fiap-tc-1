@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: api-migrate
+  namespace: fiap-tc-1
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: wait-for-mysql
+          envFrom:
+            - configMapRef:
+                name: app-config
+          command:
+            - sh
+            - -c
+            - |
+              i=0
+              until nc -z "$DB_HOST" 3306 || [ $i -ge 30 ]; do
+                i=$((i+1))
+                echo "aguardando o banco... ($i/30)"
+                sleep 2
+              done
+              nc -z "$DB_HOST" 3306 || (echo "Banco nao ficou disponivel a tempo" && exit 1)

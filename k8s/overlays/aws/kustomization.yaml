@@ -3,10 +3,17 @@ kind: Kustomization
 
 resources:
   - ../../base
-  - storageclass-auto-ebs.yaml
-  - ingressclassparams-alb.yaml
-  - nodepool-t3medium.yaml
 
 patches:
-  - path: patch-mysql-pvc.yaml
-  - path: patch-ingress-alb.yaml
+  - path: delete-mysql-deployment.yaml
+  - path: delete-mysql-service.yaml
+  - path: delete-mysql-pvc.yaml
+  - path: patch-migrate-wait.yaml
+  - path: patch-nginx-lb.yaml
+
+configMapGenerator:
+  - name: app-config
+    namespace: fiap-tc-1
+    behavior: merge
+    envs:
+      - db-host.env

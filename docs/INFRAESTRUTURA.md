@@ -2,6 +2,8 @@
 
 Este documento cobre a infraestrutura do projeto: como a aplicação foi containerizada, como ela roda em Kubernetes (local e AWS), como a infraestrutura da AWS é provisionada via Terraform, e como o pipeline de CI/CD conecta tudo isso.
 
+O Terraform deste projeto não vive mais neste repositório — foi dividido em dois repositórios irmãos: [`infra-k8s`](https://github.com/FIAP-TC/infra-k8s) (cluster e rede) e [`infra-db`](https://github.com/FIAP-TC/infra-db) (banco de dados RDS). Veja a seção [Terraform](#terraform) abaixo.
+
 ## Índice
 
 - [Arquitetura](#arquitetura)
@@ -9,7 +11,6 @@ Este documento cobre a infraestrutura do projeto: como a aplicação foi contain
   - [Infraestrutura provisionada](#infraestrutura-provisionada)
   - [Fluxo de deploy](#fluxo-de-deploy)
 - [Terraform](#terraform)
-  - [Recursos criados](#recursos-criados)
   - [Como aplicar](#como-aplicar)
 - [Instruções: execução local](#instruções-execução-local)
 - [Instruções: deploy em Kubernetes](#instruções-deploy-em-kubernetes)
@@ -45,12 +46,12 @@ graph TB
 |---|---|---|
 | `api` | PHP-FPM 8.3 rodando o Laravel; imagem própria (`docker/php-fmp/Dockerfile`) | `k8s/base/06-api-deployment.yaml`, `07-api-service.yaml` |
 | `nginx` | Serve os estáticos do Laravel e repassa `.php` via FastCGI pro `api`; imagem própria (`docker/nginx/Dockerfile`) | `k8s/base/09-nginx-deployment.yaml`, `10-nginx-service.yaml`, `08-nginx-configmap.yaml` |
-| `mysql` | Banco de dados; `Deployment` com `strategy: Recreate` (evita dois Pods montando o mesmo PVC) | `k8s/base/04-mysql-deployment.yaml`, `03-mysql-pvc.yaml`, `05-mysql-service.yaml` |
+| `mysql` | Banco de dados **só no overlay `local`**; `Deployment` com `strategy: Recreate` (evita dois Pods montando o mesmo PVC). No overlay `aws`, esse Deployment e Service são removidos via patch (`$patch: delete`) e a API conecta direto na instância RDS do `infra-db` | `k8s/base/04-mysql-deployment.yaml`, `03-mysql-pvc.yaml`, `05-mysql-service.yaml`; exclusão em `k8s/overlays/aws/delete-mysql-deployment.yaml` e `delete-mysql-service.yaml` |
 | `mailpit` | Captura e-mails enviados em dev, sem entregar de verdade | `k8s/base/12-mailpit-deployment.yaml`, `13-mailpit-service.yaml` |
 | `api-migrate` | `Job` que roda `php artisan migrate --seed --force`; tem um `initContainer` que espera o MySQL responder antes de rodar | `k8s/base/15-api-migrate-job.yaml` |
 | `HPA` | Escala o Deployment `api` entre 1 e 5 réplicas, alvo de 50% de uso de CPU | `k8s/base/11-api-hpa.yaml` |
 | `Ingress` | Roteamento HTTP externo, por host (`app` vs `mailpit`) | `k8s/base/14-ingress.yaml` + patch no overlay AWS |
-| `ConfigMap`/`Secret` | Configuração e credenciais, injetadas via `envFrom` | `k8s/base/01-configmap.yaml`, `02-secret.yaml` (não versionado, veja `.example`) |
+| `ConfigMap`/`Secret` | Configuração e credenciais, injetadas via `envFrom`. No overlay `aws`, o `DB_HOST` é sobrescrito via `configMapGenerator` lendo `k8s/overlays/aws/db-host.env` (gerado a cada deploy, não versionado) | `k8s/base/01-configmap.yaml`, `02-secret.yaml` (não versionado, veja `.example`) |
 
 ### Infraestrutura provisionada
 
@@ -77,9 +78,10 @@ graph TB
 
 **O que é criado por quem:**
 
-- **Terraform** cria: VPC, subnets, Internet Gateway, route table, Security Group, o cluster EKS em si, e os *access entries* que permitem autenticação via `kubectl`.
+- **Terraform**, no repositório [`infra-k8s`](https://github.com/FIAP-TC/infra-k8s), cria: VPC, subnets, Internet Gateway, route table, Security Group do cluster, o cluster EKS em si, os *access entries* que permitem autenticação via `kubectl`, e o bucket S3 do state.
+- **Terraform**, no repositório [`infra-db`](https://github.com/FIAP-TC/infra-db), cria a instância **RDS MySQL**, seu próprio Security Group (libera a porta 3306 só pro Security Group do cluster) e o DB Subnet Group — reaproveitando a VPC/subnets do `infra-k8s` via `terraform_remote_state` (lido do mesmo bucket S3), sem criar rede própria.
 - **EKS Auto Mode** (não o Terraform) cria, em resposta a objetos do Kubernetes: as instâncias EC2 (via `NodePool`/`NodeClass`), o **ALB** (via `Ingress`), e os volumes **EBS** (via `PersistentVolumeClaim`). Por isso alguns recursos AWS "aparecem" sem estar no `terraform state` — eles são gerenciados pelo Kubernetes, não pelo Terraform.
-- Não usamos **RDS** nem **EBS CSI driver**/**AWS Load Balancer Controller** manuais — o Auto Mode do EKS já resolve storage e load balancing nativamente, com as permissões IAM já configuradas na conta de Academy.
+- Não usamos **EBS CSI driver**/**AWS Load Balancer Controller** manuais — o Auto Mode do EKS já resolve storage e load balancing nativamente. O banco de dados usa **RDS** gerenciado (não roda dentro do cluster) no overlay `aws`; no overlay `local`, continua sendo um `Deployment` de MySQL dentro do próprio cluster.
 
 ### Fluxo de deploy
 
@@ -99,103 +101,36 @@ O deploy só acontece se **todas** as etapas anteriores passarem (`needs:` no Gi
 
 ## Terraform
 
-Código em [`terraform/`](../terraform/).
+O provisionamento da infraestrutura AWS vive em dois repositórios irmãos, clonados lado a lado com este:
 
-### Recursos criados
+| Repositório | Provisiona |
+|---|---|
+| [`infra-k8s`](https://github.com/FIAP-TC/infra-k8s) | VPC, subnets, Internet Gateway, route table, Security Group do cluster, EKS (Auto Mode), *access entries* pro `kubectl`, bucket S3 do state |
+| [`infra-db`](https://github.com/FIAP-TC/infra-db) | Instância RDS MySQL, seu Security Group (libera só o SG do cluster do `infra-k8s`) e DB Subnet Group, lendo a rede do `infra-k8s` via `terraform_remote_state` |
 
-| Arquivo | Recurso(s) | O que faz |
-|---|---|---|
-| `vpc.tf` | `aws_vpc.vpc_fiap` | Rede privada isolada (`10.0.0.0/16`) |
-| `subnet.tf` | `aws_subnet.subnet_public[0..2]` | 3 subnets públicas, uma por zona de disponibilidade (`us-east-1a/b/c`), com as tags `kubernetes.io/role/elb` e `kubernetes.io/cluster/<nome>` que o Auto Mode precisa pra saber onde colocar o ALB |
-| `internet-g.tf` | `aws_internet_gateway.igw` | Permite tráfego de/para a internet |
-| `route-t.tf` | `aws_route_table.rt_public` + associações | Roteia tráfego das subnets pro Internet Gateway |
-| `sg.tf` | `aws_security_group.sg` | Security Group anexado ao cluster (HTTP liberado, egress total) |
-| `data.tf` | `data.aws_iam_role.eks_cluster`, `data.aws_iam_role.eks_node` | Referencia os IAM Roles **já existentes** na conta de Academy (não criamos roles novos — a conta bloqueia isso) |
-| `eks-cluster.tf` | `aws_eks_cluster.cluster` | O cluster EKS, com **Auto Mode** habilitado (`compute_config`, `storage_config`, `kubernetes_network_config.elastic_load_balancing`) |
-| `access-entry.tf` | `aws_eks_access_entry`, `aws_eks_access_policy_association` | Autoriza o principal IAM `voclabs` (usado pelo `kubectl`) como admin do cluster |
-| `bucket.tf` | `aws_s3_bucket.bucket_backend` + versionamento + bloqueio de acesso público | Bucket que guarda o *state* do próprio Terraform |
-| `backend.tf` | (config de backend) | Aponta o Terraform pra usar esse bucket como state remoto |
-| `providers.tf` | provider `aws` | Configuração de provider e região |
-| `vars.tf` | variáveis | Nome do projeto, região, CIDR da VPC, tags, tipo de instância |
-| `output.tf` | outputs | Expõe `vpc_id`, `vpc_cidr`, `subnet_id`, `subnet_cidr` |
-| `iam-role.tf` | *(comentado)* | Mantido só como referência de como seria numa conta AWS sem a limitação da Academy — não é usado |
+Essa separação é deliberada: infraestrutura de rede/cluster muda raramente e é sensível, o banco é um componente independente que pode ser recriado sem derrubar o cluster, e a aplicação (este repositório) muda o tempo todo — misturar os três num repo só dificultaria revisão e controle de acesso.
 
-**Importante:** o Terraform **não** gerencia os manifestos Kubernetes da aplicação (isso é responsabilidade do `k8s/` + Kustomize) — essa separação foi deliberada: infraestrutura muda raramente e é sensível, aplicação muda o tempo todo.
+**Importante:** nenhum dos dois repositórios de infra gerencia os manifestos Kubernetes da aplicação — isso é responsabilidade do `k8s/` + Kustomize, aqui mesmo.
 
-### Adaptando pra uma conta AWS diferente (obrigatório antes da primeira aplicação)
-
-Os valores abaixo são **específicos da conta AWS Academy** de quem for rodar — nunca são reaproveitáveis entre contas diferentes. Pule esta seção só se for reaplicar na mesma conta que já provisionou antes.
-
-**1. Nome do bucket de state — `terraform/backend.tf` e `terraform/vars.tf`**
-
-Nomes de bucket S3 são **globais** (únicos em toda a AWS, não só na sua conta) — reaproveitar um nome já usado por outra conta causa `403 Forbidden` ao tentar acessá-lo. Troque o `bucket` em `backend.tf` (valor literal, não aceita variável) e `projectName` em `vars.tf` para algo único (ex: sufixo com seu nome/conta).
-
-**2. IAM Roles do EKS — `terraform/data.tf`**
-
-Descubra os nomes existentes na sua conta:
-```bash
-aws iam list-roles --query "Roles[?contains(RoleName, 'Lab')].RoleName" --output table
-```
-O nome contendo `LabEksClusterRole` vai em `data.aws_iam_role.eks_cluster`; o que contém `LabEksNodeRole` vai em `data.aws_iam_role.eks_node`. Para confirmar de forma definitiva (não só pelo nome), veja a *trust policy* de cada um:
-```bash
-aws iam get-role --role-name "<nome>" --query "Role.AssumeRolePolicyDocument"
-```
-O Cluster role é assumido pelo serviço `eks.amazonaws.com`; o Node role, por `ec2.amazonaws.com`.
-
-**3. Confirmar suporte ao Auto Mode**
-
-```bash
-aws iam list-attached-role-policies --role-name "<nome-do-cluster-role>"
-```
-Precisa conter: `AmazonEKSClusterPolicy`, `AmazonEKSNetworkingPolicy`, `AmazonEKSComputePolicy`, `AmazonEKSBlockStoragePolicy`, `AmazonEKSLoadBalancingPolicy`. Sem essas 5, o Auto Mode não funciona nessa conta.
-
-**4. Principal ARN de acesso via `kubectl` — `terraform/vars.tf`**
-
-```bash
-aws sts get-caller-identity
-```
-O `Arn` retornado vem no formato de sessão assumida (`arn:aws:sts::<conta>:assumed-role/<role>/<sessão>`) — pegue o `Account` e o nome do role (entre `assumed-role/` e a próxima `/`) e monte o ARN do role em si:
-```
-arn:aws:iam::<Account>:role/<role>
-```
-Esse é o valor de `access_entry_principal_arn`.
-
-**5. O Secret da aplicação — `k8s/base/02-secret.yaml`**
-
-Esse arquivo **não vem do Git** (é gitignored, contém credenciais reais). Antes do primeiro `kubectl apply -k`, copie o modelo e preencha com valores próprios:
-```bash
-cp k8s/base/02-secret.yaml.example k8s/base/02-secret.yaml
-```
-Gere `APP_KEY`/`JWT_SECRET`/`APPROVAL_SECRET` novos (`openssl rand -base64 32`, `-hex 32`, `-hex 16`, respectivamente) e escolha suas próprias senhas de banco — nunca reaproveite os valores de outra pessoa.
+Valores específicos de cada conta AWS Academy (nome do bucket de state, IAM Roles, ARN de acesso via `kubectl`, senha do banco) estão documentados nos READMEs de cada repositório, nas seções "Adaptando pra uma conta AWS diferente" — não duplicados aqui.
 
 ### Como aplicar
 
-O bucket do state (`bucket.tf`) tem um problema de "ovo e galinha": não dá pra usar um backend S3 que ainda não existe. Por isso, a primeira aplicação é feita em duas fases — depois disso, aplicações normais.
-
-**Primeira vez (bootstrap do backend):**
+Siga essa ordem — `infra-db` lê o state do `infra-k8s` pra saber a VPC/subnets/Security Group do cluster, então precisa que ele já esteja aplicado:
 
 ```bash
-cd terraform
-mv backend.tf backend.tf.disabled   # desativa o backend remoto temporariamente
-terraform init                       # inicializa com state local
-terraform apply \
-  -target=aws_s3_bucket.bucket_backend \
-  -target=aws_s3_bucket_versioning.bucket_backend \
-  -target=aws_s3_bucket_public_access_block.bucket_backend
-mv backend.tf.disabled backend.tf   # reativa o backend
-terraform init                       # migra o state local pro bucket (confirme "yes")
-```
-
-**Uso normal (a partir daqui):**
-
-```bash
-cd terraform
+# 1. infra-k8s — veja o README do repo pro bootstrap do bucket, se for a primeira vez nessa conta
+cd ../infra-k8s/terraform
 terraform init
-terraform plan
 terraform apply
+
+# 2. infra-db — só depois do infra-k8s aplicado
+cd ../../infra-db/terraform
+terraform init
+terraform apply -var-file="secrets.tfvars"
 ```
 
-Veja o passo a passo completo (incluindo os objetos Kubernetes que faltam depois do `apply`) em [Instruções: provisionamento da infraestrutura com Terraform](#instruções-provisionamento-da-infraestrutura-com-terraform).
+Veja o passo a passo completo (incluindo os objetos Kubernetes e o `db-host.env`) em [Instruções: provisionamento da infraestrutura com Terraform](#instruções-provisionamento-da-infraestrutura-com-terraform).
 
 ---
 
@@ -237,11 +172,15 @@ Acesso: `http://fiap-tc-1.localtest.me:9080/api/test` (o Ingress local usa `clou
 
 ### Cluster na AWS
 
-Pré-requisito: o cluster já ter sido criado via Terraform (veja seção seguinte).
+Pré-requisito: o cluster (`infra-k8s`) e o banco (`infra-db`) já terem sido criados via Terraform (veja [Terraform](#terraform) acima).
 
 ```bash
 aws eks update-kubeconfig --name eks-fiap-tc-1-terraform-backend --region us-east-1 --alias eks-fiap-tc-1
 kubectl config use-context eks-fiap-tc-1
+
+# gera o DB_HOST a partir do endpoint atual do RDS (muda a cada provisionamento do infra-db, por isso não é versionado)
+echo "DB_HOST=$(terraform -chdir=../infra-db/terraform output -raw rds_endpoint)" > k8s/overlays/aws/db-host.env
+
 kubectl apply -k k8s/overlays/aws
 kubectl get all -n fiap-tc-1
 ```
@@ -271,29 +210,51 @@ kubectl apply -k k8s/overlays/<local|aws>
 
 ## Instruções: provisionamento da infraestrutura com Terraform
 
-1. **Pré-requisitos:** `terraform`, `aws` CLI autenticado (conta AWS Academy — credenciais temporárias, expiram por sessão de laboratório).
+1. **Pré-requisitos:** `terraform`, `aws` CLI autenticado (conta AWS Academy — credenciais temporárias, expiram por sessão de laboratório). Clone [`infra-k8s`](https://github.com/FIAP-TC/infra-k8s) e [`infra-db`](https://github.com/FIAP-TC/infra-db) lado a lado com este repositório (mesma pasta pai).
 
-2. **Aplicar o Terraform** (veja [Como aplicar](#como-aplicar) acima pro bootstrap do bucket, se for a primeira vez):
+2. **Aplicar o `infra-k8s` primeiro** (veja o README do repo pro bootstrap do bucket, se for a primeira vez nessa conta):
 
    ```bash
-   cd terraform
+   cd ../infra-k8s/terraform
    terraform init
    terraform apply
    ```
 
-3. **Conectar o `kubectl` ao cluster recém-criado:**
+3. **Aplicar o `infra-db`** (precisa dos outputs do `infra-k8s` já aplicado — `vpc_id`, `subnet_id`, `cluster_sg_id`):
+
+   ```bash
+   cd ../../infra-db/terraform
+   terraform init
+   terraform apply -var-file="secrets.tfvars"
+   ```
+
+4. **Conectar o `kubectl` ao cluster recém-criado:**
 
    ```bash
    aws eks update-kubeconfig --name eks-fiap-tc-1-terraform-backend --region us-east-1 --alias eks-fiap-tc-1
    ```
 
-4. **Aplicar os objetos Kubernetes que o Auto Mode exige** (não são geridos pelo Terraform — `StorageClass`, `IngressClass`/`IngressClassParams`, `NodePool` customizado — e, junto, toda a aplicação):
+5. **Gerar o `DB_HOST` do overlay `aws`** (volte pra raiz deste repositório), a partir do endpoint atual do RDS:
+
+   ```bash
+   cd ../fiap-tc-1
+   echo "DB_HOST=$(terraform -chdir=../infra-db/terraform output -raw rds_endpoint)" > k8s/overlays/aws/db-host.env
+   ```
+
+6. **Preencher o Secret da aplicação**, se ainda não existir (`k8s/base/02-secret.yaml` é gitignored, nunca vem do clone):
+
+   ```bash
+   cp k8s/base/02-secret.yaml.example k8s/base/02-secret.yaml
+   ```
+   Gere `APP_KEY`/`JWT_SECRET`/`APPROVAL_SECRET` novos (`openssl rand -base64 32`, `-hex 32`, `-hex 16`, respectivamente) e escolha suas próprias senhas de banco — nunca reaproveite os valores de outra pessoa.
+
+7. **Aplicar os objetos Kubernetes que o Auto Mode exige** (não são geridos pelo Terraform — `StorageClass`, `IngressClass`/`IngressClassParams`, `NodePool` customizado — e, junto, toda a aplicação):
 
    ```bash
    kubectl apply -k k8s/overlays/aws
    ```
 
-5. **Verificar:**
+8. **Verificar:**
 
    ```bash
    kubectl get nodes          # deve aparecer 1 instância t3.medium após os Pods serem agendados
@@ -304,15 +265,17 @@ kubectl apply -k k8s/overlays/<local|aws>
 ### Desligando pra economizar (sem perder o state)
 
 ```bash
-kubectl delete -k k8s/overlays/aws          # deixa o Auto Mode desmontar ALB/EBS antes do cluster sumir
-cd terraform
-terraform destroy -target=aws_eks_cluster.cluster   # derruba só o cluster; VPC/subnets/bucket ficam (não custam nada)
+kubectl delete -k k8s/overlays/aws                     # deixa o Auto Mode desmontar ALB/EBS antes do cluster sumir
+cd ../infra-db/terraform
+terraform destroy -var-file="secrets.tfvars"            # derruba o RDS, principal custo do banco
+cd ../../infra-k8s/terraform
+terraform destroy -target=aws_eks_cluster.cluster       # derruba só o cluster; VPC/subnets/SG/bucket ficam (não custam nada)
 ```
 
-Pra retomar depois: `terraform apply` novamente (reaproveita a VPC já existente) + os passos 3 e 4 acima.
+Pra retomar depois: `terraform apply` no `infra-k8s` (reaproveita a VPC e o Security Group já existentes, recria só o cluster), `terraform apply -var-file="secrets.tfvars"` no `infra-db` (recria o RDS com um endpoint novo), e repita os passos 4 a 7 acima — o `db-host.env` precisa ser gerado de novo porque o endpoint muda a cada criação do banco.
 
 ### Via CI/CD (GitHub Actions)
 
-O workflow [`.github/workflows/infra.yml`](../.github/workflows/infra.yml) automatiza `plan` (em todo push/PR que toque `terraform/**`) e `apply`/`destroy` sob demanda (`workflow_dispatch`, escolhendo a ação no menu da aba Actions) — nunca aplica/destrói sozinho a partir de um push comum.
+O Terraform de cada repositório de infra tem seu próprio pipeline: `infra-k8s` já tem [`.github/workflows/infra.yml`](https://github.com/FIAP-TC/infra-k8s/blob/main/.github/workflows/infra.yml), que automatiza `plan` (em todo push/PR que toque `terraform/**`) e `apply`/`destroy` sob demanda (`workflow_dispatch`, escolhendo a ação no menu da aba Actions) — nunca aplica/destrói sozinho a partir de um push comum. `infra-db` ainda não tem esse pipeline configurado.
 
-Secrets necessários no repositório (`Settings → Secrets and variables → Actions`): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` (credenciais temporárias da sessão ativa do AWS Academy Lab — precisam ser atualizadas a cada nova sessão).
+Secrets necessários em cada repositório de infra (`Settings → Secrets and variables → Actions`): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` (credenciais temporárias da sessão ativa do AWS Academy Lab — precisam ser atualizadas a cada nova sessão).
