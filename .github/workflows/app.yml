@@ -1,23 +1,48 @@
-name: Deploy da aplicação
+name: CI/CD da aplicação
 
+# CI (tests, phpstan, image, k8s-validate) roda em todo PR para a main e em todo push na main.
+# CD (deploy) roda só no push da main (ou manualmente), e só se todos os jobs de CI passarem.
+# PR não tem filtro de paths: se um check for obrigatório na proteção da main e o workflow
+# não rodar, o PR fica travado esperando.
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
-    paths:
-      - "app/**"
-      - "docker/**"
-      - "k8s/**"
-      - "routes/**"
-      - "database/**"
-      - "composer.*"
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# Em PR, um push novo cancela a execução anterior; na main, nunca cancela um deploy no meio.
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PHP_VERSION: "8.3"
+  PHP_EXTENSIONS: bcmath, intl, zip, pdo, pdo_mysql
+  API_IMAGE: elmarcelfarias/php8.3-fpm-alpine
+  NGINX_IMAGE: elmarcelfarias/nginx-fiap-tc-1
+  AWS_REGION: us-east-1
+  # Valores que mudam com a conta do AWS Academy: podem ser sobrescritos em
+  # Settings → Secrets and variables → Actions → Variables, sem editar este arquivo.
+  EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME || 'eks-fiap-tc-1-terraform-backend' }}
+  RDS_INSTANCE_ID: ${{ vars.RDS_INSTANCE_ID || 'mecanica' }}
+  K8S_NAMESPACE: fiap-tc-1
+  KUSTOMIZE_VERSION: "5.4.3"
+  KUBECONFORM_VERSION: "0.6.7"
+  TRIVY_VERSION: "0.56.2"
+
 jobs:
-  build:
+  tests:
     runs-on: ubuntu-latest
     env:
+      # O phpunit.xml usa force="false" nessas variáveis, então o valor daqui vale no CI.
       DB_HOST: 127.0.0.1
-      DB_DATABASE: fiap_mecanica
       DB_USERNAME: root
       DB_PASSWORD: root
     services:
@@ -37,63 +62,56 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar PHP
+      - name: Configurar PHP (com pcov para cobertura)
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
-          extensions: bcmath, intl, zip, pdo, pdo_mysql
-          coverage: none
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: pcov
 
-      - name: Cache de dependências do Composer
+      - name: Descobrir a pasta de cache do Composer
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache do Composer
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-php${{ env.PHP_VERSION }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-php${{ env.PHP_VERSION }}-
 
       - name: Instalar dependências
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Preparar .env
         run: |
           cp .env.example .env
           php artisan key:generate
 
-      - name: Rodar migrations
-        run: php artisan migrate --force
+      - name: Testes (Unit + Feature) com cobertura
+        run: vendor/bin/phpunit --coverage-text=coverage.txt --coverage-clover=coverage.xml
 
-  unit-tests:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Configurar PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          extensions: bcmath, intl, zip, pdo, pdo_mysql
-          coverage: none
-
-      - name: Cache de dependências do Composer
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
-
-      - name: Instalar dependências
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Preparar .env
+      # Só relatório por enquanto: nenhum limite mínimo de cobertura barra o PR.
+      - name: Resumo da cobertura
+        if: always() && hashFiles('coverage.txt') != ''
         run: |
-          cp .env.example .env
-          php artisan key:generate
+          {
+            echo "### Cobertura de testes"
+            echo '```'
+            grep -A4 "Summary:" coverage.txt || head -20 coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Testes unitários (PHPUnit)
-        run: vendor/bin/phpunit --testsuite=Unit
+      - name: Publicar relatório de cobertura
+        if: always() && hashFiles('coverage.xml') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            coverage.txt
+            coverage.xml
 
   phpstan:
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
@@ -102,29 +120,29 @@ jobs:
       - name: Configurar PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
-          extensions: bcmath, intl, zip, pdo, pdo_mysql
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
           coverage: none
 
-      - name: Cache de dependências do Composer
+      - name: Descobrir a pasta de cache do Composer
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache do Composer
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-php${{ env.PHP_VERSION }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-php${{ env.PHP_VERSION }}-
 
       - name: Instalar dependências
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Preparar .env
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
+      # Nível 0, igual ao CI anterior (o phpstan.neon diz 5, mas subir é um passo à parte).
       - name: Análise estática (PHPStan)
-        run: vendor/bin/phpstan analyse --level=0
+        run: vendor/bin/phpstan analyse --level=0 --memory-limit=-1 --no-progress
 
-  build-and-push:
-    needs: [unit-tests, phpstan]
+  image:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.vars.outputs.tag }}
@@ -136,36 +154,81 @@ jobs:
         id: vars
         run: echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Configurar Buildx (build multi-plataforma)
-        uses: docker/setup-buildx-action@v3
+      # Build sempre (pega Dockerfile quebrado já no PR); o push só acontece na main.
+      - name: Build da imagem da API
+        run: docker build --platform linux/amd64 -f docker/php-fmp/Dockerfile -t "$API_IMAGE:${{ steps.vars.outputs.tag }}" .
+
+      - name: Build da imagem do Nginx
+        run: docker build --platform linux/amd64 -f docker/nginx/Dockerfile -t "$NGINX_IMAGE:${{ steps.vars.outputs.tag }}" .
+
+      # Só relatório por enquanto (--exit-code 0): vulnerabilidades não barram o pipeline.
+      - name: Scan de vulnerabilidades (Trivy)
+        run: |
+          for image in "$API_IMAGE" "$NGINX_IMAGE"; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              "aquasec/trivy:$TRIVY_VERSION" image \
+              --severity HIGH,CRITICAL --exit-code 0 --no-progress --format table \
+              "$image:${{ steps.vars.outputs.tag }}" | tee -a trivy.txt
+          done
+          {
+            echo "### Trivy (HIGH/CRITICAL, só relatório)"
+            echo '```'
+            grep -E "^(Total|.*\(alpine)" trivy.txt || echo "sem resumo"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Login no Docker Hub
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build + push da imagem da API
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/php-fmp/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: elmarcelfarias/php8.3-fpm-alpine:${{ steps.vars.outputs.tag }}
+      - name: Push das imagens
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          docker push "$API_IMAGE:${{ steps.vars.outputs.tag }}"
+          docker push "$NGINX_IMAGE:${{ steps.vars.outputs.tag }}"
 
-      - name: Build + push da imagem do Nginx
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/nginx/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: elmarcelfarias/nginx-fiap-tc-1:${{ steps.vars.outputs.tag }}
+  k8s-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar kustomize e kubeconform (versões fixas)
+        run: |
+          curl -sSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar -xz
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar -xz
+          sudo mv kustomize kubeconform /usr/local/bin/
+
+      # Os overlays referenciam arquivos que não são versionados; aqui bastam os modelos.
+      - name: Criar arquivos de exemplo (Secret e DB_HOST)
+        run: |
+          cp k8s/base/02-secret.yaml.example k8s/base/02-secret.yaml
+          cp k8s/overlays/aws/db-host.env.example k8s/overlays/aws/db-host.env
+
+      - name: Renderizar e validar os overlays
+        run: |
+          for overlay in aws local; do
+            echo "::group::overlay $overlay"
+            kustomize build "k8s/overlays/$overlay" \
+              | kubeconform -strict -summary -ignore-missing-schemas
+            echo "::endgroup::"
+          done
 
   deploy:
-    needs: build-and-push
+    needs: [tests, phpstan, image, k8s-validate]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment:
+      name: prod
+      url: ${{ steps.smoke.outputs.url }}
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    env:
+      TAG: ${{ needs.image.outputs.tag }}
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -176,37 +239,105 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Instalar kustomize
+      - name: Instalar kustomize (versão fixa)
         run: |
-          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          curl -sSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar -xz
           sudo mv kustomize /usr/local/bin/
 
       - name: Atualizar kubeconfig
-        run: aws eks update-kubeconfig --name eks-fiap-tc-1-terraform-backend --region us-east-1
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
 
+      # O endpoint do RDS muda a cada provisionamento, por isso é lido direto da AWS.
+      - name: Descobrir o endpoint do RDS
+        run: |
+          DB_HOST=$(aws rds describe-db-instances \
+            --db-instance-identifier "$RDS_INSTANCE_ID" \
+            --query 'DBInstances[0].Endpoint.Address' --output text)
+          if [ -z "$DB_HOST" ] || [ "$DB_HOST" = "None" ]; then
+            echo "::error::RDS '$RDS_INSTANCE_ID' não encontrado ou sem endpoint (o infra-db já foi aplicado?)"
+            exit 1
+          fi
+          echo "DB_HOST=$DB_HOST" > k8s/overlays/aws/db-host.env
+          echo "RDS: $DB_HOST"
+
+      # Secrets via env (não interpolados direto no script) para não quebrar com caracteres especiais.
       - name: Gerar o Secret da aplicação
+        env:
+          DB_DATABASE: ${{ secrets.SECRET_DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.SECRET_DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.SECRET_DB_PASSWORD }}
+          DB_ROOT_PASSWORD: ${{ secrets.SECRET_DB_ROOT_PASSWORD }}
+          APP_KEY: ${{ secrets.SECRET_APP_KEY }}
+          JWT_SECRET: ${{ secrets.SECRET_JWT_SECRET }}
+          APPROVAL_SECRET: ${{ secrets.SECRET_APPROVAL_SECRET }}
         run: |
           kubectl create secret generic app-secret \
-            --namespace=fiap-tc-1 \
-            --from-literal=DB_DATABASE="${{ secrets.SECRET_DB_DATABASE }}" \
-            --from-literal=DB_USERNAME="${{ secrets.SECRET_DB_USERNAME }}" \
-            --from-literal=DB_PASSWORD="${{ secrets.SECRET_DB_PASSWORD }}" \
-            --from-literal=DB_ROOT_PASSWORD="${{ secrets.SECRET_DB_ROOT_PASSWORD }}" \
-            --from-literal=APP_KEY="${{ secrets.SECRET_APP_KEY }}" \
-            --from-literal=JWT_SECRET="${{ secrets.SECRET_JWT_SECRET }}" \
-            --from-literal=APPROVAL_SECRET="${{ secrets.SECRET_APPROVAL_SECRET }}" \
+            --namespace="$K8S_NAMESPACE" \
+            --from-literal=DB_DATABASE="$DB_DATABASE" \
+            --from-literal=DB_USERNAME="$DB_USERNAME" \
+            --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+            --from-literal=DB_ROOT_PASSWORD="$DB_ROOT_PASSWORD" \
+            --from-literal=APP_KEY="$APP_KEY" \
+            --from-literal=JWT_SECRET="$JWT_SECRET" \
+            --from-literal=APPROVAL_SECRET="$APPROVAL_SECRET" \
             --dry-run=client -o yaml > k8s/base/02-secret.yaml
 
       - name: Definir a tag da imagem no overlay da AWS
         working-directory: k8s/overlays/aws
         run: |
-          kustomize edit set image elmarcelfarias/php8.3-fpm-alpine=elmarcelfarias/php8.3-fpm-alpine:${{ needs.build-and-push.outputs.tag }}
-          kustomize edit set image elmarcelfarias/nginx-fiap-tc-1=elmarcelfarias/nginx-fiap-tc-1:${{ needs.build-and-push.outputs.tag }}
+          kustomize edit set image "$API_IMAGE=$API_IMAGE:$TAG"
+          kustomize edit set image "$NGINX_IMAGE=$NGINX_IMAGE:$TAG"
 
+      # Job é imutável: trocar a imagem exige apagar o anterior antes de reaplicar.
       - name: Remover Job de migration anterior (se existir)
-        run: kubectl delete job api-migrate -n fiap-tc-1 --ignore-not-found=true
+        run: kubectl delete job api-migrate -n "$K8S_NAMESPACE" --ignore-not-found=true
 
       - name: Aplicar no cluster
         run: kubectl apply -k k8s/overlays/aws
+
+      - name: Aguardar o rollout
+        run: |
+          kubectl rollout status deployment/api -n "$K8S_NAMESPACE" --timeout=300s
+          kubectl rollout status deployment/nginx -n "$K8S_NAMESPACE" --timeout=300s
+
+      # Espera "Complete" ou "Failed" (kubectl wait sozinho só esperaria o timeout num Job falho).
+      - name: Aguardar as migrations
+        run: |
+          for i in $(seq 1 60); do
+            complete=$(kubectl get job api-migrate -n "$K8S_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}')
+            failed=$(kubectl get job api-migrate -n "$K8S_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Failed")].status}')
+            if [ "$complete" = "True" ]; then echo "Migrations concluídas"; exit 0; fi
+            if [ "$failed" = "True" ]; then
+              echo "::error::Job api-migrate falhou"
+              kubectl logs job/api-migrate -n "$K8S_NAMESPACE" --all-containers || true
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "::error::Timeout esperando o Job api-migrate"
+          exit 1
+
+      # O DNS de um LoadBalancer novo pode levar alguns minutos para responder.
+      - name: Smoke test (GET /api/test)
+        id: smoke
+        run: |
+          for i in $(seq 1 30); do
+            LB_HOST=$(kubectl get svc nginx -n "$K8S_NAMESPACE" -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            [ -n "$LB_HOST" ] && break
+            echo "aguardando o hostname do LoadBalancer... ($i/30)"
+            sleep 10
+          done
+          if [ -z "$LB_HOST" ]; then echo "::error::LoadBalancer sem hostname"; exit 1; fi
+          echo "url=http://$LB_HOST" >> "$GITHUB_OUTPUT"
+          curl -fsS --retry 30 --retry-delay 10 --retry-all-errors "http://$LB_HOST/api/test"
+          echo
+          echo "API no ar: http://$LB_HOST/api/test" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Diagnóstico (só em caso de falha)
+        if: failure()
+        run: |
+          kubectl get pods,svc,jobs -n "$K8S_NAMESPACE" -o wide || true
+          kubectl describe pods -n "$K8S_NAMESPACE" | tail -n 80 || true
+          kubectl get events -n "$K8S_NAMESPACE" --sort-by=.lastTimestamp | tail -n 30 || true
